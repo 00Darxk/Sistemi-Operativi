@@ -2,7 +2,7 @@
 Appunti tratti dal corso di Sistemi Operativi, Anno Accademico 2024/25, Dipartimento di Ingegneria Civile, Informatica e delle Tecnologie Aeronautiche, Università degli Studi "Roma Tre". 
 
 ## Contenuti:
-- [Appunti](Sistemi Operativi) delle lezioni, tenute l'anno accademico 2024/25 dal Professore XX. 
+- [Appunti](Sistemi_Operativi.pdf) delle lezioni, tenute l'anno accademico 2024/25 dal Professore XX. 
 
 ## Contenuti del Corso
 
