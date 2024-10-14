@@ -197,8 +197,16 @@ di CPU. Ma ottiene delle prestazioni pessime rispetto al tempo di ritorno.
 Infatti per minimizzare il tempo di ritorno il processore deve concentrarsi su un unico job alla volta. 
 
 
+La lunghezza del quanto di tempo è critico per il tempo di risposta. Diminuendo il quanto di tempo, l'overhead rappresentato dal context switch rappresenta una parte 
+considerevole del quanto di tempo, ma diminuisce il tempo di risposta. Se aumenta il quanto di tempo, viene ammortizzato l'effetto del context switch, il tempo di 
+risposta aumenta. 
+Questa politica è tra le peggiori per il tempo di ritorno, ma è la più equa nella sua distribuzione delle risorse. 
 
 
+Si considerano ora job in grado di eseguire operazioni input/output o accessi a risorse esterne al processore, quindi possono passare dallo stato running allo stato 
+blocked. 
+
+%% TODO aggiungere "incorporating I/O"
 
 
 
