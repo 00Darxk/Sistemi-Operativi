@@ -12,7 +12,7 @@
 \usepackage{bookmark}
 \usepackage{fancyhdr}
 \usepackage{romanbarpagenumber}
-%\usepackage{minted}
+\usepackage{minted}
 %\usepackage{subfig}
 \usepackage[italian]{babel}
 %\usepackage{float}
@@ -30,7 +30,6 @@
 }
 
 \newsavebox{\tempbox} %{\raisebox{\dimexpr.5\ht\tempbox-.5\height\relax}}
-
 
 \makeatother
 
@@ -68,13 +67,94 @@ Università degli Studi ``Roma Tre"}}
 \clearpage
 \pagenumbering{arabic}
 
-\section{Introduzione a Docker} 
+\section{Introduzione e Docker} 
 
-%% TODO aggiungere lezioni 23, 24, 30 sett; 1, 7, 8 ott;
+Questo corso anche se copre alcuni dei compiti di un amministratore di sistema, non rappresenta un corso di formazione per quest'ultimi. Si tratterà degli aspetti tipici di un kernel di un 
+moderno sistema operativo, trattando nello specifico un sistema Linux, ma saranno applicabili ad ogni sistema operativo moderno. Sarà quindi necessaria una qualsiasi distribuzione Linux. Si utilizza Linux perché 
+è un sistema gratuito e open-source. Si tratta di uno dei sistemi operativi più usati al mondo, usato nella maggior parte dei supercomputer e tra i web server rappresenta il 96\% del primo milione in termini di 
+traffico. Installato sul'85\% di tutti gli smartphone e conta 1.6 miliardi di utenti. 
+Una distribuzione Linux, o ``distro'', consiste in un sistema operativo basato sul kernel di Linux, insieme a configurazioni predefinite distribuite da organizzazioni. Esistono centinaia, se non migliaia, 
+di distribuzioni di Linux, ognuna con un suo diverso obiettivo e caratteristiche. 
+
+Per utilizzare una distribuzione di Linux si usera il programma Docker Desktop, un software di virtualizzazione leggera. In generale sono possibili due modi di simulare un applicazioni native ad un altro sistema 
+operativo. Si può utilizzare una macchina virtuale, che riproduce il sistema operativo da virtualizzare, con tutte le sue librerie, su cui viene eseguita l'applicazione. Tutto questo a sua volta si poggia su un 
+hypervisor per gestire questi sistemi operativi, poggiato a sua volta sul sistema operativo originario della macchina. Questa è una struttura molto profonda e presenta un elevato overhead, causa quindi una perdita 
+di prestazioni. 
+
+Negli anni '10 del 2000 si introdusse un meccanismo per alleggerire questo tipo di virtualizzazione, introducendo il concetto di container. Questi contenitori hanno al loro interno solamente l'applicazione nativa 
+al sistema operativo e le sue librerie, senza simulare l'intero sistema operativo. Questi contenitori poggiano direttamente sul sistema operativo base, accompagnati dal software di docker. Questo processo di 
+virtualizzazione leggera è possibile solo in alcuni casi, su Windows e Mac è possibile infatti una gestione semplificata di applicazioni per Linux in questo modo. 
+
+%% TODO img VM vs Container
+
+Docker rappresenta il software più utilizzato a livello globale per realizzare una virtualizzazione leggera. Tramite docker è possibile interagire direttamente con l'applicazione, anche se è comunque possibile 
+caricare un sistema operativo diverso, in container Linux. 
+
+
+Docker presenta un'architettura a tre livelli, un client permette l'interfaccia con la macchina host, il docker host dove sono contenute le immagini ed i container. Inoltre è presente un registro online di 
+immagini scaricabili. Un'immagine rappresenta un eseguibile con tutte le librerie al completo come container. Un'immagine rappresenta un'applicazione statica, indipendente da file esterni, ed è possibile realizzare 
+un container basato solamente su quell'immagine. Si utilizzano immagini poiché molte applicazioni richiedono versioni diverse delle stesse librerie e file binari, per cui naturalmente solleveranno conflitti, che si 
+vuole evitare. 
+
+Un container contiene un'applicazione eseguita in un ambiente isolato, da un'immagine base e le sue librerie e binari, da cui è possibile creare più di un container diversi. Ogni container può avere un volume, 
+uno spazio su disco dove memorizzare dati e configurazioni indipendenti, in uno spazio isolato dall'immagine, per cui è possibile ricaricare l'immagine senza perdere i dati salvati sul volume. 
+Si usa un volume poiché è buona norma che i container non abbiano uno stato, questo viene associato ad uno o più container specificando un mountpoint, accessibile in lettura o scrittura. 
+
+Le immagini sono dei template di sola lettura contenenti il root del filesystem che si vuole istanziare, i meta-dati, le variabili d'ambiente, e le varie configurazioni dell'applicazione che si vuole eseguire. 
+Queste immagini vengono costruite a strati, ognuno di questi può aggiungere, modificare o rimuovere file. Si comincia a creare un'immagine partendo da un contenitore vuoto ed aggiungendo progressivamente nuovi strati 
+l'uno sull'altro. Tutti questi strati sono in sola lettura, solamente l'ultimo strato di default è anche in scrittura, per aggiungere configurazioni o file finali, anche se si preferisce inserirli in un volume 
+con un ciclo di vita isolato. 
+
+Utilizzando container, immagini e volume è possibile disaccoppiare tutte le componenti del sistema operativo, le applicazioni ed i dati, rispettivamente. 
+
+
+\subsection{Comandi di Docker}
+
+La sintassi di Docker venne ripulita ed aggiornata nel 2017, per cui risulta molto semplice ed intuitiva. Il comando principale è il prefisso \verb|docker|, si possono scegliere operazioni sulla gestione di container, 
+immagini o volumi specificando la parola chiave \verb|container|, \verb|image| o \verb|volume|. Dopo di questi si possono inserire tipici comandi come \verb|ls| per visualizzare gli elementi contenuti, rimuoverli con 
+\verb|rm|, etc. Si utilizza anche la parola chiave \verb|network| per gestire la rete di container. 
+
+Il comando \verb|help| fornisce una lista di comandi disponibili. 
+
+In questo corso si utilizzerà l'immagine, presente nel docker hub, \verb|chmod84/os2425|. 
+
+%% TODO generalizzare comandi
+
+Per creare un container sulla base di questa immagine, bisogna scaricarla con i seguenti comandi:
+\begin{minted}{powershell}
+  docker image pull chmod84/os2425
+\end{minted}
+In seguito per creare ed avviare il container si usa il seguente comando:
+\begin{minted}{powershell}
+  docker container --name os2425
+  --hostname sistemi-operativi -v dati:/corso -it chmod84/os2425
+\end{minted}
+Questo comando crea un volume chiamato ``corso'' nella root del filesystem. 
+
+Per avviare o terminare un container si usano i comandi:
+\begin{minted}{powershell}
+  docker container start os2425
+  docker container stop os2425
+\end{minted}
+
+Per aggiornare l'immagine bisogna prima rimuovere il vecchio container:
+\begin{minted}{powershell}
+  docker container rm os2425
+\end{minted}
+In seguito si effettua una pull della nuova immagine e si crea il container come descritto precedentemente. Per avviare la shell di un container precedentemente avviato si utilizza il 
+seguente comando:
+\begin{minted}{powershell}
+  docker container exec -it os2425 /bin/bash
+\end{minted}
 
 \clearpage
 
 \section{Introduzione alla Linea di Comando}
+
+
+%% TODO aggiungere lezioni 24, 30 set; 1, 7, 8 ott;
+
+
 
 \clearpage
 
