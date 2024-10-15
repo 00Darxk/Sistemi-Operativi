@@ -67,8 +67,6 @@ Università degli Studi ``Roma Tre"}}
 \clearpage
 \pagenumbering{arabic}
 
-%% TODO aggiungere lezioni 24, 30 set; 1, 7, 8 ott;
-
 \section{Introduzione e Docker} 
 
 Questo corso anche se copre alcuni dei compiti di un amministratore di sistema, non rappresenta un corso di formazione per quest'ultimi. Si tratterà degli aspetti tipici di un kernel di un 
@@ -152,6 +150,8 @@ seguente comando:
 \clearpage
 
 \section{Introduzione alla Linea di Comando}
+
+%% TODO aggiungere lezioni 24, 30 set; 1 ott
 
 \clearpage
 
@@ -237,6 +237,125 @@ Inoltre si possono eseguire più di un programma contemporaneamente combinando i
 Tutti questi processi sembrano essere eseguiti allo stesso tempo, si definisce processo un programma in esecuzione, ma l'ordine in cui vengono effettuate le 
 istruzioni di ogni programma non è costante. 
 
+La memoria fisica è composta da un array di byte, ed un programma mantiene tutte le sue informazioni su strutture di dati in memoria. Divise in memoria in scrittura 
+(store), specifica i dati da scrivere al dato indirizzo, e lettura (load), specificando l'indirizzo per accedere ai dati. 
+
+Si utilizza un altro programma offerto dal docente per poter analizzare il comportamento della memoria virtuale, chiamato \verb|mem.c|:
+\begin{minted}{c}
+	#include <unistd.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include "common.h"
+
+	int main(int argc, char *argv[]) {
+		int *p = malloc(sizeof(int)); // a1: allocate some 	memory
+		assert(p != NULL);
+		printf("(%d) address of p: %08x\n",
+		getpid(), (unsigned) p); // a2: print out the address of the memory
+		*p = 0; // a3: put zero into the first slot of the memory
+		while (1) {
+			Spin(1);
+			*p = *p + 1;
+			printf("(%d) p: %d\n", getpid(), *p); // a4
+		}
+		return 0;
+	}
+\end{minted}
+Ogni istanza del programma alloca memoria allo stesso indirizzo, e sembra aggiornare i valori allo stesso indirizzo, indipendentemente. 
+
+Eseguendo più istanze di questo programma si rivela come ogni istanza del programma abbia una sua memoria virtuale dedicata, in realtà è il sistema operativo che mappa 
+tra questi spazi di indirizzi virtuali e la memoria fisica. In questo modo si evitano interferenze tra processi, proteggendo la stabilità e sicurezza tra i vari processi. 
+
+
+Questi programmi vengono eseguiti essenzialmente in contemporanea, per cui il sistema operativo deve gestire il processore per fornire l'illusione 
+che tutti questi programmi vengono eseguiti allo stesso tempo. Questo si chiama problema della concorrenza. 
+Programmi moderni esacerbano questo necessitando di più thread, necessitando di più core virtuali. 
+
+Si considera il seguente codice \verb|thread.c|:
+\begin{minted}{c}
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include "common.h"
+
+	int counter = 0;
+	int loops;
+
+	void *worker(void *arg) {
+		int i;
+		for (i = 0; i < loops; i++) 
+			counter++;
+		return NULL;
+	}
+	int main(int argc, char *argv[]) {
+	if (argc != 2) {
+		fprintf(stderr, "usage: threads<value>\n");
+		exit(1);
+	}
+	loops = atoi(argv[1]);
+	pthread_t p1, p2;
+	printf("Initial value : %d\n", counter);
+
+	Pthread_create(&p1, NULL, worker, NULL);
+	Pthread_create(&p2, NULL, worker, NULL);
+	Pthread_join(p1, NULL);
+	Pthread_join(p2, NULL);
+	printf("Final value : %d\n", counter);
+	return 0;
+	}
+\end{minted}
+
+Questo programma utilizza due threads per modificare una variabile condivisa, incrementandone il valore da zero ad ogni ciclo. 
+Per un numero di cicli relativamente piccolo, il valore restituito da questo programma rappresenta esattamente il doppio del valore inserito 
+come argomento. Ma per numeri più elevati di cicli di loop, il valore tende a cambiare rispetto al valore atteso. 
+Il problema dipende dal modo in cui viene incrementato il contatore condiviso. L'incremento del contatore non corrisponde ad un'istruzione 
+atomica, ma è composta da tre operazioni distinte, la lettura ed il carico del valore attuale su un registro, l'incremento, ed il trasferimento in 
+memoria. Queste tre operazioni non vengono eseguite atomicamente, da cui sorge il problema della concorrenza. Se due thread eseguono quest'operazione 
+simultaneamente allora, è possibile che uno di questi legga il valore che l'altro ancora non ha avuto tempo di trasferire in memoria prima dell'incremento. 
+Questo fenomeno è noto come condizione di gara, dove il risultato dipende dall'ordine in cui i thread accedono alle risorse condivise. Per risolvere questi problemi 
+possono introdurre meccanismi di lock o di blocco, per sincronizzare i due thread, in modo che solo unthread alla volta sia in grado di accedere alla risorsa condivisa. 
+
+Quando si utilizzano questi meccanismi evitare di utilizzarli in modo improprio, altrimenti è possibile che sorgano altri problemi di deadlock, dove i thread 
+aspettano all'infinito lo sblocco di una risorsa condivisa. 
+
+
+Dispositivi di memoria condivisa come DRAM memorizzano i dati in modo voltatile, per l'esecuzione dei programmi. Ovvero perdono i valori memorizzati quando il sistema 
+viene spento. Quindi si ha la necessità di memorizzare di dati in maniera persistente grazie a sistemi hardware e software. I sistemi utilizzano sistemi I/O come 
+dischi a stato solido (SSD) o dischi rigidi (HDD), non volatile. Dal punto di vista del software invece, per la persistenza il filesystem gestisce il disco ed è 
+responsabile per memorizzare tutti i file che verranno creati dall'utente. Questo gestore alloca lo spazio necessario sul disco per il file, organizza i suoi dati in modo 
+da essere disponibile in futuro, e corregge e gestisce eventuali errori che potrebbero verificarsi nel processo di scrittura. 
+
+Si considera il seguente codice per la creazione di un file con scritto ``Hello World'' alla directory \verb|/tmp/file| del container Linux:
+\begin{minted}{c}
+	#include <stdio.h>
+	#include <unistd.h>
+	#include <assert.h>
+	#include <fcntl.h>
+	#include <sys/types.h>
+
+	int	main(int argc, char *argv[]) {
+	int fd = open("/tmp/file", O_WRONLY | O_CREAT| O_TRUNC, S_IRWXU);
+	assert(fd > -1);
+	int rc = write(fd, "hello world\n", 13);
+	assert(rc == 13);
+	close(fd);
+	return 0;
+}
+\end{minted}
+
+
+Le funzioni \verb|open()|, \verb|write()| e \verb|close()| vengono indirizzate alla parte del sistema operativo chiamato filesystem che gestisce questo tipo di richieste.  
+
+Questa parte del sistema operativo si occupa di strati aggiuntivi di astrazione come dischi RAID, gestori di volumi logici, etc. Trova una posizione sul disco dove i nuovi 
+dati risiederanno. Infine invia richieste di I/O ai dispositivi di memoria specifici. Il filesystem si occupa degli errori in scrittura che possono sorgere durante la 
+scrittura su disco o guasti ai dispositivi. Utilizza due diversi meccanismi il ``journaling'' o ``copy-on-write'', e gestendo ed ordinando file in maniera efficiente sul 
+disco. 
+La tecnica di journaling consiste nel mantenere un registro di tutte le operazioni di scrittura, così da essere in modo ci completarle o ripristinare lo stato in caso 
+di guasti al sistema. 
+La tecnica di copy-on-write invece consiste nella creazione di una copia, invece di sovrascriverli alla modifica dei dati. In questo modo si evitano corruzioni dei dati 
+durante la scrittura, nella nuova posizione. 
+
+
+%% TODO aggiungere lezioni 8 ott;
 
 \subsection{Processi}
 
