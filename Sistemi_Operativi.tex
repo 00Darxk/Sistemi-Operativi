@@ -67,6 +67,8 @@ Università degli Studi ``Roma Tre"}}
 \clearpage
 \pagenumbering{arabic}
 
+%% TODO aggiungere lezioni 24, 30 set; 1, 7, 8 ott;
+
 \section{Introduzione e Docker} 
 
 Questo corso anche se copre alcuni dei compiti di un amministratore di sistema, non rappresenta un corso di formazione per quest'ultimi. Si tratterà degli aspetti tipici di un kernel di un 
@@ -151,14 +153,90 @@ seguente comando:
 
 \section{Introduzione alla Linea di Comando}
 
-
-%% TODO aggiungere lezioni 24, 30 set; 1, 7, 8 ott;
-
-
-
 \clearpage
 
 \section{Sistemi Operativi}
+
+Quando un programma viene eseguito segue sempre una serie di passaggi, comuni per ogni programma in esecuzione su un processore, chiamato ciclo di fetch-decode-execute, 
+analizzato dettagliatamente nel corso di calcolatori elettronici:
+\begin{itemize}
+  \item Fetch: il processore preleva l'istruzione da eseguire dal programma;
+  \item Decode: l'istruzione viene trasformata in una o più istruzioni macchina (in base al tipo di architettura del processore);
+  \item Execute: l'istruzione macchina viene effettuata dal processore;
+  \item Il processore aumenta il PC e passa alla prossima istruzione. 
+\end{itemize}
+Questo sistema si basa sul modello di Von Neumann, ma le prestazioni e le aspettative per calcolatori 
+moderni sono molto maggiori di questo, una sostanziale differenza per le macchine moderne è la capacità di eseguire più di un programma in simultanea. 
+
+Il sistema operativo è ciò che permette ai calcolatori moderni di poter effettuare queste esecuzioni simultanee, quindi si trova responsabile della gestione di tutti i 
+programmi in esecuzione su una macchina. 
+Ha il compito di rendere semplice l'esecuzione di un programma, permettendogli di condividere memoria con tutti gli altri processi in esecuzione, e permettergli di 
+interagire con periferiche o dispositivi di I/O. Il compito del sistema operativo consiste nell'effettuare queste operazioni efficientemente e velocemente. 
+
+
+Il sistema operativo effettua un'operazione di virtualizzazione, trasformando le componenti fisiche del calcolatore in una forma virtuale, indipendentemente, in modo che 
+questi programmi siano in grado di interagirci. Ha la funzione di connettere questi programmi e l'hardware dove vengono eseguiti. Le risorse fisiche sono il processore, 
+la memoria condivisa, il disco, le periferiche, ed altri dispositivi connessi. Questa forma virtuale è quindi più accessibile ai programmi e di più facile uso e generale. 
+A volte quindi ci si può riferire al sistema operativo come una macchina virtuale, capace di creare versioni virtuali dei componenti del calcolatore. 
+
+Queste funzionalità introdotte dal sistema operativo possono venire invocate da parte di un qualsiasi programma, ma non è detto che a questo venga permesso di effettuare 
+tutte le operazioni offerte. Tratteremo questo concetto nella sezione sui processi. 
+Ai programmi sono disponibili delle chiamate di sistema, invocazioni di funzioni specifiche offerte dal sistema operativo sulle componenti virtuali, in modo che questo 
+posso interfacciarsi direttamente con l'hardware, agendo come un intermediario per i programmi. In generale il sistema operativo offre delle librerie standard o API per 
+potersi interfacciare con le chiamate di sistema. 
+Queste chiamate di sistema consistono nell'eseguire programmi, accedere alla memoria e dispositivi di I/O, tra le più comuni ed utilizzate, ma in generale fornisce 
+sulle centinaia di chiamate di sistema. 
+
+
+Il sistema operativo si comporta come un gestore di risorse, come il processore, la memoria ed il disco. Si definisce gestore poiché sceglie come condividere il 
+processore a tutti i processi in esecuzione, contemporaneamente in accesso alla stessa memoria, ed allo stesso disco e periferiche. 
+
+Un calcolatore moderno dispone di un certo numero di processori fisici, o virtuali. Contengono una decina di core fisici, ma una macchina server potrebbe disporre di 
+decine di core sparsi su più processori. Generalmente il numero di programmi in esecuzione è molto maggiore del numero di core o processori disponibili dalla macchina. 
+Il sistema operativo è quindi in grado di fornire l'illusione di avere un numero molto elevato di core, per ciascuno dei processi in esecuzione, grazie alla virtualizzazione 
+delle risorse. 
+
+Si considera un semplice esempio fornito dal docente nel file \verb|cpu.c|:
+\begin{minted}{c}
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <sys/time.h>
+  #include <assert.h>
+  #include "common.h"
+
+  int
+  main(int argc, char *argv[]){
+    if (argc != 2) {
+      fprintf(stderr, "usage: cpu <string>\n");
+      exit(1);
+    }
+    char *str = argv[1];
+    while (1) {
+      Spin(1); // Repeatedly checks the time and
+      returns once it has run for a second
+      printf("%s\n", str);
+    }
+    return 0;
+  }
+\end{minted}
+
+
+Questo programma prende come argomento una stringa di caratteri e ripete costantemente dopo ogni secondo il primo carattere della stringa. Si può terminare con la 
+combinazione di tasti ``Control + C''. Dopo aver compilato in un file binario il codice, per eseguirlo si indica il suo indirizzo relativo, ed il sistema operativo automaticamente lo interpreta come un 
+programma da eseguire, quindi non rappresenta un comando per eseguire direttamente il programma:
+\begin{minted}{powershell}
+>  gcc -o cpu cpu.c 
+> ./cpu "A"
+\end{minted}
+
+Inoltre si possono eseguire più di un programma contemporaneamente combinando i comandi con un \verb|&|:
+\begin{minted}{powershell}
+> ./cpu "A" & ./cpu "B" & ./cpu "C" & ./cpu "D"
+\end{minted}
+
+Tutti questi processi sembrano essere eseguiti allo stesso tempo, si definisce processo un programma in esecuzione, ma l'ordine in cui vengono effettuate le 
+istruzioni di ogni programma non è costante. 
+
 
 \subsection{Processi}
 
