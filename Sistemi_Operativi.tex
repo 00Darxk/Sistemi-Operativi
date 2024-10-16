@@ -67,6 +67,8 @@ Università degli Studi ``Roma Tre"}}
 \clearpage
 \pagenumbering{arabic}
 
+%% TODO redo sectioning 
+
 \section{Introduzione e Docker} 
 
 Questo corso anche se copre alcuni dei compiti di un amministratore di sistema, non rappresenta un corso di formazione per quest'ultimi. Si tratterà degli aspetti tipici di un kernel di un 
@@ -173,6 +175,7 @@ programmi in esecuzione su una macchina.
 Ha il compito di rendere semplice l'esecuzione di un programma, permettendogli di condividere memoria con tutti gli altri processi in esecuzione, e permettergli di 
 interagire con periferiche o dispositivi di I/O. Il compito del sistema operativo consiste nell'effettuare queste operazioni efficientemente e velocemente. 
 
+\subsection{Sistema Operativo come Gestore di Risorse}
 
 Il sistema operativo effettua un'operazione di virtualizzazione, trasformando le componenti fisiche del calcolatore in una forma virtuale, indipendentemente, in modo che 
 questi programmi siano in grado di interagirci. Ha la funzione di connettere questi programmi e l'hardware dove vengono eseguiti. Le risorse fisiche sono il processore, 
@@ -333,13 +336,13 @@ Si considera il seguente codice per la creazione di un file con scritto ``Hello 
 	#include <sys/types.h>
 
 	int	main(int argc, char *argv[]) {
-	int fd = open("/tmp/file", O_WRONLY | O_CREAT| O_TRUNC, S_IRWXU);
-	assert(fd > -1);
-	int rc = write(fd, "hello world\n", 13);
-	assert(rc == 13);
-	close(fd);
-	return 0;
-}
+		int fd = open("/tmp/file", O_WRONLY | O_CREAT| O_TRUNC, S_IRWXU);
+		assert(fd > -1);
+		int rc = write(fd, "hello world\n", 13);
+		assert(rc == 13);
+		close(fd);
+		return 0;
+	}
 \end{minted}
 
 
@@ -354,30 +357,174 @@ di guasti al sistema.
 La tecnica di copy-on-write invece consiste nella creazione di una copia, invece di sovrascriverli alla modifica dei dati. In questo modo si evitano corruzioni dei dati 
 durante la scrittura, nella nuova posizione. 
 
-
-%% TODO aggiungere lezioni 8 ott;
-
 \subsection{Processi}
 
-Il kernel ha a disposizioni l'intero instruction set del processore. 
+Un processo viene definito come un qualsiasi programma in esecuzione, dove un programma è un agglomerato di istruzioni isolati su una zona di memoria secondaria. Il 
+sistema operativo ha il compito di caricare questo programma ed eseguirlo. 
 
-I programmi eseguiti non hanno la possibilità di eseguire tutti le istruzioni fornite dalla CPU. Non possono eseguire istruzioni che accedono a risorse condivise, come 
-la memoria, o il disco. Per poter accedere a queste istruzioni, i processi chiedono al kernel del sistema operativo, di effettuare queste operazioni per loro conto, 
-poiché il kernel è in grado di effettuare queste operazioni. Il sistema operativo evita quindi conflitti e risolve questioni di sicurezza. 
-Questo viene implementato tramite delle chiamate di sistema, essenzialmente un API con cui i processi possono interagire. Una chiamata di sistema blocca l'esecuzione del 
-processo corrente, e attiva l'esecuzione del sistema operativo per eseguire effettivamente la chiamata di sistema. Si effettua un salto dal codice del programma e quello 
-del sistema operativo. Inoltre si ha un'elevazione dei privilegi in modo da poter accedere a tutte le istruzioni del processore. 
-Dopo aver effettuato la chiamata di sistema, si effettua un salto al processo in user space, e quindi diminuire il livello di privilegio nell'uso del processore. 
-Per ritornare si effettua un salto all'istruzione immediatamente successiva alla chiamata di sistema. 
+Per dare l'illusione di un'esecuzione simultanea di molti processi, il sistema operativo assegna ad ogni processo un quanto di tempo per cui quel processo può 
+essere eseguito dal processore. Questi processi in esecuzione vengono poi interrotti tramite dei segnali di interrupt, ed il sistema operativo assegna il prossimo 
+processo in coda ad essere eseguito. Il sistema operativo quindi genera una coda di processi da essere eseguiti in base in base a politiche diverse, trattate successivamente 
+nella sezione dedicata allo scheduling. 
+Questo processo di condivisione del tempo si chiama ``time sharing''. 
 
-Non si può effettuare un salto ad una qualsiasi istruzione, solamente alla prima istruzione della system call che si vuole invocare. Per questo viene inizializzata una 
-tabella a tempo di avvio dove sono presenti tutti gli indirizzi di partenza per le system call disponibili ai programmi utenti. Rappresentano l'unica interfaccia tra 
-i processi nello spazio utente al sistema operativo. 
-Questa tabella viene chiamata ``trap table''. 
+L'operazione di terminare preventivamente l'esecuzione di un processo per poi passare ad eseguirne un altro si chiama ``context switching''. Questo fornisce l'illusione 
+di avere molti processori virtuali dedicati ad ogni processo. Ma avere molti processi in esecuzione comporta quanti di tempo di lunghezza minore, assegnati a ciascun 
+processo. Con un numero infinito di processi infatti, i quanti di tempo sarebbero di tempo infinitesimo, ed il sistema operativo sarebbe costantemente occupato ad 
+effettuare l'operazione di context switching. 
+
+Quest'operazione viene effettuata dal sistema operativo indipendentemente dall'utente, la politica di gestione è salvata in un file sorgente specifico, non accessibile 
+all'utente. 
+
+
+In generale un processo può essere caratterizzato dal suo stato di esecuzione, tutto ciò che questo può leggere o scrivere in esecuzione. \`{E} caratterizzato dal suo 
+spazio di memoria assegnatoli in memoria centrale, contenente le sue istruzioni ed i suoi dati, e nei registri della CPU durante la sua esecuzione. Questi rappresentano 
+essenzialmente un'estensione della RAM disponibile al processore. Memorizzano l'indirizzo della prossima istruzione da eseguire, il ``Program Counter'' (PC), e 
+l'indirizzo dello stack, lo ``Stack Pointer'' (SP), associato a questa esecuzione del programma, i più importanti. 
+
+
+Il sistema operativo controlla il ciclo di vita dei processi, gestendo una serie di funzioni, disponibili attraverso l'API, ``Application Programming Interface'' 
+dei processi:
+\begin{itemize}
+	\item Create: crea un nuovo programma, caricandolo dal disco ed allocando le risorse necessarie;
+	\item Destroy: interrompe l'esecuzione di un processo, attraverso una GUI, oppure con un comando ``kill'' o ``kill all''. Questo processo non danneggia l'applicazione;
+	\item Wait: mette in pausa l'esecuzione di un processo fino a quando non avviene un evento specifico;
+	\item Miscellaneous Control: offre metodi vari per la sospendere l'esecuzione di un processo per poi riprenderla in seguito. \`{E} compreso nei meccanismi di time-sharing per permettere l'esecuzione degli altri processi in coda;
+	\item Status: permette di ottenere informazioni riguardo il processo attuale.  
+\end{itemize}
+
+Per effettuare un'operazione di creazione il sistema operativo effettua una serie di operazioni. Durante l'operazioni di ``Load'' alloca lo spazio in memoria centrale per accomodare il programma. In seguito il programma, memorizzato 
+sulla memoria secondaria in formato eseguibile, e viene trasferito in maniera ``lazy'', pigra. Non viene trasferita la sua integrità, ma solo le istruzioni 
+strettamente necessarie all'esecuzione del programma, e vengono trasferite ulteriori istruzioni quando vengono richieste da altre istruzioni nel processo in 
+esecuzione. 
+Nell'operazione di ``Stack Allocation'' alloca lo stack di esecuzione del programma, utilizzato per memorizzare le variabili locali, parametri di funzioni e indirizzi 
+di ritorno. 
+Inizializzato con gli argomenti passati alla funzione \verb|main| nel programma, come \verb|argc|, numero degli argomenti passati, e l'array degli stessi \verb|argv|. 
+
+Nell'operazione di ``Heap Creation'' viene realizzato lo spazio di heap dove vengono contenuti i dati salvati durante l'esecuzione del programma, tramite operazioni 
+di \verb|malloc()|, richiedendo esplicitamente lo spazio. Questo viene poi liberato esplicitamente dal programma con un'operazione di \verb|free()|, altrimenti viene 
+liberato al termine della sua esecuzione. 
+
+``Initialize'': vengono inizializzati i tre descrittori di default per il programma, lo stdin, standard input; lo stdout, standard output; e lo stderr, standard errore. 
+Canali attraverso cui il processo è in grado di comunicare con l'ambiente esterno tramite meccanismi di I/O, oppure notificare il sistema operativo di eventuali errori. 
+
+Alla fine di questo meccanismo di creazione, il sistema operativo trasferisce il controllo della CPU al processo, iniziando dalla prima istruzione dopo la funzione 
+\verb|main()|, punto di ingresso in molti linguaggi di programmazione. 
+
+
+Un processo può esser in tre stadi distinti durante la sua esecuzione. Il sistema operativo gestisce la transizione tra questi stati e garantisce che i processi 
+vengano eseguiti correttamente, in modo efficiente. 
+\begin{itemize}
+	\item Running: il processo è in esecuzione, ovvero ha il controllo del processore ed esegue le sue istruzioni;
+	\item Ready: il processo è pronto per essere eseguito , ma il sistema operativo non l'ha scelto e quindi aspetta il suo turno nella coda;
+	\item Blocked: il processo è bloccato, perché ha richiesto delle operazioni ad alcuni dispositivi connessi al calcolatore. Impedisce che il processore rimanga occupato da un processo che non può effettivamente eseguire istruzioni.  	
+\end{itemize}
+
+In realtà sono presenti molti più stadi per lo stato di un processo, ma questa rappresenta una buona approssimazione. 
+
+Un processo pronto può essere schedulato per essere eseguito, oppure è possibile de-schedulato un processo in esecuzione per renderlo pronto. Un processo in esecuzione 
+quando richiede accesso a memoria o a dispositivi di I/O viene bloccato, e poi sbloccato quando finisce questa operazione, diventando pronto per riprendere la sua 
+esecuzione. 
+
+%% TODO img tabella tracing dello stato di un processo 
+
+Con questi stati quindi i thread di esecuzione dei vari processi vengono intrecciati tra di loro ed il processore è sempre in esecuzione di un processo in ogni 
+quanto di tempo. 
+Per organizzare i dati necessari a gestire questi processi il sistema operativo utilizza strutture dati apposite, per memorizzare lo stack di esecuzione dei processi. 
+
+Si considera una di queste strutture dati:
+\begin{minted}{c}
+// the registers xv6 will save and restore
+// to stop and subsequently restart a process
+struct context {
+	int eip; // Instruction pointer register
+	int esp; // Stack pointer register
+	int ebx; // Called the base register
+	int ecx; // Called the counter register
+	int edx; // Called the data register
+	int esi; // Source index register
+	int edi; // Destination index register
+	int ebp; // Stack base pointer register
+};
+// the different states a process can be in
+enum proc_state { UNUSED, EMBRYO, SLEEPING,
+RUNNABLE, RUNNING, ZOMBIE };
+
+// the information xv6 tracks about each process
+// including its register context and state
+struct proc {
+	char *mem; // Start of process memory
+	uint sz; // Size of process memory
+	char *kstack; // Bottom of kernel stack
+	// for this process
+	enum proc_state state; // Process state
+	int pid; // Process ID
+	struct proc *parent; // Parent process
+	void *chan; // If non-zero, sleeping on chan
+	int killed; // If non-zero, has been killed
+	struct file *ofile[NOFILE]; // Open files
+	struct inode *cwd; // Current directory
+	struct context context; // Switch here to run process
+	struct trapframe *tf; // Trap frame for the
+	// current interrupt
+};
+\end{minted}
+
+Questo codice mostra come il sistema \verb|xv6| traccia e gestisce i vari processi ed i registri per l'esecuzione dei vari processi. L'informazione relativa ai 
+vari processi viene salvata nella struttura di tipo \verb|proc|. Queste informazioni permettono di eseguire, terminare o riprendere l'esecuzione di un processo. Fornisce 
+informazioni sulla memoria utilizzata dal processo, i registri utilizzati, il suo stato, i file aperti e la directory corrente, il puntatore al processore genitore. 
+
+
+
+Il sistema operativo deve effettuare queste operazioni di time sharing efficientemente. Quindi bisogna minimizzare il tempo tra la fine di un processo e l'inizio del 
+successivo. In questo modo si minimizza l'overhead. Oltre a risolvere questo problema di overhead, il sistema operativo deve riprendere il controllo dopo che il quanto 
+di tempo assegnato a quel processo esaurisce, altrimenti potrebbe essere eseguito ininterrottamente, senza liberare le sue risorse. Inoltre se non mantiene il controllo 
+del processore, un processo maligno potrebbe effettuare operazioni non autorizzate e mettere a rischio il calcolatore. Il sistema operativo deve essere in grado di 
+poter effettuare controlli di sicurezza per verificare se un dato processo sia autorizzato a compiere una certa azione. 
+
+Per risolvere il problema delle prestazioni, il processo non viene eseguito attraverso il sistema operativo, come fosse un tramite, ma viene eseguito direttamente 
+sul processore. Questa tecnica si chiama esecuzione diretta, senza passare un livello intermedio di emulazione o interpretazione. In questo modo si riduce al minimo 
+l'intervento del sistema operativo durante l'esecuzione. 
+Se il sistema operativo non mantenesse il controllo sarebbe ridotto ad una semplice libreria, per svolgere funzioni importanti dei vari processi, senza poter gestire 
+le varie risorse. 
+Ma se il processo viene eseguito direttamente sul processore, allora il sistema operativo non può essere eseguito per mantenere il controllo, e se il processo 
+richiede un'operazione non consentita, il sistema operativo non ha modo di impedirglielo. 
+
+La soluzione per risolvere l'esecuzione di operazioni proibite consiste nell'avere due modalità di esecuzioni diverse, una per l'utente e l'altra per il sistema operativo. 
+Nello spazio o modalità utente, i processi non hanno accesso a tutte le risorse hardware del calcolatore, mentre nella modalità kernel, il sistema operativo 
+può utilizzare tutte le risorse della macchina. Le chiamate di sistema permettono ai processi di interfacciarsi con lo spazio kernel del sistema. 
+
+Nello spazio utente i processi vengono eseguiti con accesso limitato alle risorse dell'hardware, mentre le operazioni critiche come accessi in memoria, o a dispositivi 
+di I/O non sono permesse direttamente. 
+Nella modalità kernel ha pieno accesso a tutte le risorse del calcolatore, inclusi hardware e memoria. In questa modalità il sistema operativo esegue le operazioni 
+richieste dai processi nello spazio utente, in questo modo gli permette di effettuare controlli di sicurezza su queste operazioni. 
+
+
+In generale per distinguere tra queste due modalità, è presente un flag in un registro del processore per segnalare in quale modalità ci si trova. In questo modo il 
+processore può rifiutare le istruzioni ristrette in base al valore di questo flag. In pratica abilita il set completo delle istruzioni del kernel. 
+
+Si utilizzano le chiamate di sistema, interfaccia sicura e standardizzata per permettere ai processi di accedere a risorse di sistema o servizi critici. Permettono di 
+eseguire operazioni come accedere al filesystem, creare o distruggere processi, comunicare con altri processi o allocare memoria. Per eseguire una chiamata di sistema 
+il processo invoca una speciale istruzione di ``trap'', che effettua insieme un salto nel kernel, ed un aumento del livello di privilegio alla modalità kernel. 
+Viene realizzata al livello del processore, come un'operazione di salto alla prima istruzione della chiamata di sistema nel kernel. 
+Il controllo allora passa al sistema operativo, all'interno del kernel, e viene modificato il PC. 
+
+Dopo aver eseguito l'operazione richiesta dall'utente, per restituire il controllo al processo, viene invocata una chiamata ``return-from-trap'', ritorna all'istruzione 
+subito seguente dalla chiamata di sistema nel programma e diminuisce il livello di privilegio allo spaio utente. 
+
+Ma bisogna impedire di effettuare salti arbitrari dentro al kernel, questo permetterebbe l'esecuzione di codice arbitrario all'interno del kernel, il quale potrebbe 
+essere molto dannoso in caso sia presente un processo maligno o contenente errori o bug. Per questo al tempo di avvio del calcolatore viene generata una tabella 
+chiamata ``trap table'' contenente l'indirizzo della prima istruzione di ogni chiamata di sistema, numerandole. 
+In questo modo si può eseguire il codice del kernel in modo sicuro e solamente in punti predefiniti, riducendo il rischio di un'esecuzione dannosa di istruzioni nel 
+kernel. 
+Questa chiamate di sistema rappresentano l'unica un'interfaccia o API tra il processo nello spazio utente e le istruzioni del nello spazio del kernel. Tramite la 
+trap table. 
 A livello di hardware viene impostato su un registro l'indirizzo del gestore delle chiamate di sistema. 
-All'avvio di un programma viene creata un'entità processo da parte del sistema operativo, per allocare la memoria, ad una struttura dati del processo di tipo ``proc t''. %% TODO ?? wat
-Il codice del programma viene poi trasferito in memoria centrale, dal disco, e può essere svolto in maniera lazy, ovvero trasferendo solamente il codice strettamente 
-necessario, ed successivamente si trasferisce solo il codice che viene utilizzato. 
+
+
+All'avvio di un programma viene creata un'entità processo da parte del sistema operativo, per allocare la memoria, ad una struttura dati del processo di tipo \verb|proc|. 
+Il codice del programma viene poi trasferito in memoria centrale, dal disco, in maniera lazy, ovvero trasferendo solamente il codice strettamente 
+necessario, e successivamente si trasferisce solo il codice che viene utilizzato. 
 Inoltre si realizza lo stack e l'heap dell'applicazione, e si realizza il doppio puntatore a caratteri argv, per gestire gli input per il processo. Si inserisce nello 
 stack del kernel il registro ed il PC per tenere conto del processo in esecuzione, e tiene conto delle chiamate di sistema e dei loro argomenti per effettuare system call. 
 
@@ -385,7 +532,7 @@ Alla fine di questo operazioni bisogna passare il controllo al programma appena 
 istruzione da eseguire. L'hardware conosce l'indirizzo di memoria base dello stack che contiene il valore dei registri da inizializzare per avviare il processo. Dopo 
 aver popolato i registri ed il PC, cambia la modalità di funzionamento allo spazio utente e salta alla prima istruzione nel metodo main. 
 
-Ora il programma in esecuzione segue le istruzioni sequenzialmente, ed eventualmente deve eseguire delle chiamate di sistema, quindi invocando una funzione di trap per 
+Ora il programma in esecuzione segue le istruzioni sequenzialmente, ed eventualmente deve eseguire delle chiamate di sistema, quindi invoca una funzione di trap per 
 saltare al livello spazio kernel, ma bisogna salvare i valori del processo nello spazio riservato nel kernel. Questo salvataggio viene effettuato in modo completamente autonomo 
 da parte dell'hardware prima di cedere il controllo al kernel. Dopo averli salvati si eleva il livello di privilegi e si salta alla prima istruzione del gestore della trap, 
 eseguito dal punto di vista del kernel, si eseguono le istruzioni della chiamata di sistema, e si effettua una istruzione return from trap. 
