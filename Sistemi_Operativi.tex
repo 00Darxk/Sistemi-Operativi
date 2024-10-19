@@ -7,6 +7,7 @@
 \usepackage{amsfonts} 
 \usepackage{verbatim}
 \usepackage{mathrsfs}  
+\usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{braket}
 \usepackage{bookmark}
@@ -67,7 +68,7 @@ Università degli Studi ``Roma Tre"}}
 \clearpage
 \pagenumbering{arabic}
 
-%% TODO redo sectioning 
+%% TODO redo section 
 
 \section{Introduzione e Docker} 
 
@@ -109,7 +110,6 @@ con un ciclo di vita isolato.
 
 Utilizzando container, immagini e volume è possibile disaccoppiare tutte le componenti del sistema operativo, le applicazioni ed i dati, rispettivamente. 
 
-
 \subsection{Comandi di Docker}
 
 La sintassi di Docker venne ripulita ed aggiornata nel 2017, per cui risulta molto semplice ed intuitiva. Il comando principale è il prefisso \verb|docker|, si possono scegliere operazioni sulla gestione di container, 
@@ -126,6 +126,8 @@ Per creare un container sulla base di questa immagine, bisogna scaricarla con i 
 \begin{minted}{powershell}
   docker image pull chmod84/os2425
 \end{minted}
+Questo comando di default prende l'ultima versione dell'immagine disponibile, in caso si voglia utilizzare una versione specifica si indica con \verb|:| seguito dal numero di versione oppure \verb|latest|, per l'ultima 
+versione disponibile. Questo tag viene associato dal produttore della versione arbitrariamente, quindi potrebbe non corrispondere all'ultima versione esistente dell'immagine. 
 In seguito per creare ed avviare il container si usa il seguente comando:
 \begin{minted}{powershell}
   docker container --name os2425
@@ -154,6 +156,98 @@ seguente comando:
 \section{Introduzione alla Linea di Comando}
 
 %% TODO aggiungere lezioni 24, 30 set; 1 ott
+
+All'apertura del container docker ci si trova davanti ad una riga di comando del tipo:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$    
+\end{minted}
+
+Il termina prima della chiocciola indica l'utente con cui si è effettuato l'accesso. La maggior parte dei sistemi operativi moderni infatti sono sviluppati su di una base multiutente. Per cui lo stesso sistema può 
+essere utilizzato da utenti diversi, anche contemporaneamente con una separazione di privilegi, isolando i file appartenenti ai vari profili degli utenti. Si utilizza quindi l'utente \verb|corso|. Mentre il nome 
+dell'host è \verb|sistemi-operativi|, specificato dopo la chiocciola. Un'ulteriore separatore \verb|:| lo separa dai caratteri \verb|~$|. Il primo rappresenta un percorso, descritto successivamente, indica 
+la directory corrente, in questo caso \verb|~| indica la cartella di base dell'utente utilizzato per sfruttare il sistema. Il carattere \verb|$| indica dove viene inserito il comando o l'applicativo sulla riga 
+di comando. Al posto di questo carattere può essere presente un cancelletto \verb|#|, nel caso di livello di privilegio di amministratore. 
+
+Quando viene effettuato un comando, viene restituito un output a schermo, ed alla riga successiva, viene riproposto il prompt dei comandi. Non necessariamente tutti i comandi producono un output visivo a schermo. 
+
+Il comando \verb|pwd| ``Print Working Directory'' stampa a schermo la directory corrente dove si sta lavorando. 
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ pwd
+/home/corso
+corso@sistemi-operativi:~$    
+\end{minted}
+
+Questo concetto è fondamentale, poiché mostra in quale posizione del filesystem vengono eseguiti i comandi proposti, all'interno del quale vengono effettuate le operazioni, che possono essere di creazione, modifica, 
+rimozione, di file o di altre directory. 
+L'indirizzo fornito si legge da sinistra verso destra, e specifica la root del filesystem \verb|/|, dove si trova la cartella \verb|home|, dove si trova la cartella \verb|corso|, dove ci troviamo attualmente. 
+Il filesystem è un oggetto di estrema complessità, che permette di astrarre in maniera semplice la virtualizzazione dei dati. Questo permette all'utente di interfacciarsi direttamente con l'hardware del calcolatore. 
+Questo sistema organizza i file in cartelle, contenenti altre cartelle, identificate da un percorso o directory, per individuarli in modo univoco. Rappresenta il percorso dalla radice dell'albero al nodo specifico 
+individuato nel filesystem. Le cartelle possono essere espresse equivalentemente sia come \verb|cartella/| che \verb|cartella|, si utilizza \verb|/| dopo il nome della directory per specificare si tratti di una 
+cartella e non di file. Se un nodo ha dei figli, allora si tratta di una cartella, mentre tutti i file sono foglie, ma non tutte le foglie sono file, e non possono essere espressi con uno \verb|/| finale. 
+
+%% TODO img ex del filesystem (lucidi)
+
+Per spostarsi all'interno del filesystem, è disponibile il comando \verb|cd| ``Change Directory'', seguito dal percorso:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cd /home
+corso@sistemi-operativi:/home$
+\end{minted}
+Per ritornare alla directory iniziale è sufficiente effettuare nuovamente un \verb|cd|:
+\begin{minted}{powershell}
+corso@sistemi-operativi:/home$ cd corso
+corso@sistemi-operativi:~$
+\end{minted}
+    
+Se viene eseguito correttamente, non produce alcune output, mentre se riscontra un errore viene mostrato a schermo. 
+
+
+Esistono essenzialmente due tipi di percorsi, relativi ed assoluti. Si distinguono semplicemente per la presenza di uno \verb|/| iniziale. I percorsi assoluti specificano l'intero percorso nella sua interezza, 
+partendo dalla radice del filesystem, come \verb|/home/corso|. I percorsi che non iniziano con \verb|/| sono percorsi relativi, come \verb|corso|, all'interno di \verb|/home|. 
+
+Se si utilizza un percorso assoluto, l'interprete dei comandi ci porta esattamente all'interno di quel percorso, altrimenti l'interprete dei comandi concatena la working directory con il comando relativo inserito, 
+generando il percorso da seguire. Non c'è alcuna differenza nel funzionamento di questi due comandi, poiché viene gestito trasparentemente dal sistema operativo. 
+
+Ogni directory contiene sempre due directory speciali: \verb|.| e \verb|..|, dove \verb|.| indica la directory corrente. Per cui \verb|/home/corso/.| è uguale a \verb|/home/corso|. Sarà molto utile in comandi 
+successivi. La directory \verb|..| rappresenta la directory esattamete superiore nel filesystem. Per cui \verb|/home/corso/..| è uguale a \verb|/home|. 
+Quest'ultima directory ci permette di risalire l'albero del filesystem gradualmente. Viene utilizzata per semplificare il movimento all'interno del filesystem, senza necessariamente conoscere tutti i percorsi 
+possibili alle directory superiori. Anche la radice contiene queste due cartelle, quindi sembrerebbe possibile salire al livello superiore della radice, ma il comando \verb|cd ..| riporta alla radice. 
+
+La home directory è dove vengono archiviati tutti i file di un determinato utente, in generale in un sistema Linux, ogni utente ha una sua directory all'interno della directory \verb|/home|, chiamata con il proprio 
+nome utente. Utilizzare nomi differenti è possibile, ma non avviene di default. In ogni posizione del filesystem è possibile utilizzare il comando \verb|cd ~| per spostarsi direttamente nella home directory, ma 
+questo simbolo non è presente nelle tastiere italiane, bisognerebbe utilizzare infatti la combinazione ASCII ``Alt+126''. Tuttavia è possibile effettuare la stessa operazione con \verb|cd| senza argomenti. 
+
+Per creare delle directory esiste il comando \verb|mkdir| ``Make Directory'', seguito dal percorso che si vuole realizzare, indicato con un percorso relativo o assoluto. Tutte le cartelle precedenti all'ultima 
+devono esistere, per permettere di creare la cartella.  
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mkdir test
+\end{minted}
+Equivalente a 
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mkdir /home/corso/test
+\end{minted}
+
+Si possono creare più cartelle contemporaneamente aggiungendo un altro percorso separato da spazi:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mkdir dir1 dir2 dir3
+\end{minted}
+
+Esiste un'opzione che si può passare a \verb|mkdir| per creare un intero percorso in una volta sola tramite \verb|-p|:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mkdir -p dir4/dir5/dir6
+\end{minted}
+
+
+Se questo comando viene chiamato senza argomento, stampa un errore a schermo, poiché richiede un argomento, una cartella da creare. Non si vuole memorizzare il contenuto di tutte le cartelle del filesystem, si 
+utilizza quindi il comando \verb|ls| ``List''. Questo comando stampa a schermo la lista di tutti i file o cartelle contenute nella working directory:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ ls
+test dir1 dir2 dir3 dir4
+\end{minted}
+
+
+
+
+
 
 \clearpage
 
@@ -228,13 +322,13 @@ Questo programma prende come argomento una stringa di caratteri e ripete costant
 combinazione di tasti ``Control + C''. Dopo aver compilato in un file binario il codice, per eseguirlo si indica il suo indirizzo relativo, ed il sistema operativo automaticamente lo interpreta come un 
 programma da eseguire, quindi non rappresenta un comando per eseguire direttamente il programma:
 \begin{minted}{powershell}
->  gcc -o cpu cpu.c 
-> ./cpu "A"
+corso@sistemi-operativi:~$ gcc -o cpu cpu.c 
+corso@sistemi-operativi:~$ ./cpu "A"
 \end{minted}
 
 Inoltre si possono eseguire più di un programma contemporaneamente combinando i comandi con un \verb|&|:
 \begin{minted}{powershell}
-> ./cpu "A" & ./cpu "B" & ./cpu "C" & ./cpu "D"
+corso@sistemi-operativi:~$ ./cpu "A" & ./cpu "B" & ./cpu "C" & ./cpu "D"
 \end{minted}
 
 Tutti questi processi sembrano essere eseguiti allo stesso tempo, si definisce processo un programma in esecuzione, ma l'ordine in cui vengono effettuate le 
