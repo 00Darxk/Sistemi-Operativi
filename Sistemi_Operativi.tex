@@ -155,8 +155,6 @@ seguente comando:
 
 \section{Introduzione alla Linea di Comando}
 
-%% TODO aggiungere lezioni 24, 30 set; 1 ott
-
 All'apertura del container docker ci si trova davanti ad una riga di comando del tipo:
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$    
@@ -219,21 +217,25 @@ questo simbolo non è presente nelle tastiere italiane, bisognerebbe utilizzare 
 Per creare delle directory esiste il comando \verb|mkdir| ``Make Directory'', seguito dal percorso che si vuole realizzare, indicato con un percorso relativo o assoluto. Tutte le cartelle precedenti all'ultima 
 devono esistere, per permettere di creare la cartella.  
 \begin{minted}{powershell}
-corso@sistemi-operativi:~$ mkdir test
+corso@sistemi-operativi:~$ mkdir tutorial
+corso@sistemi-operativi:~$
 \end{minted}
-Equivalente a 
+Equivalente a: 
 \begin{minted}{powershell}
-corso@sistemi-operativi:~$ mkdir /home/corso/test
+corso@sistemi-operativi:~$ mkdir /home/corso/tutorial
+corso@sistemi-operativi:~$
 \end{minted}
 
 Si possono creare più cartelle contemporaneamente aggiungendo un altro percorso separato da spazi:
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$ mkdir dir1 dir2 dir3
+corso@sistemi-operativi:~$
 \end{minted}
 
 Esiste un'opzione che si può passare a \verb|mkdir| per creare un intero percorso in una volta sola tramite \verb|-p|:
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$ mkdir -p dir4/dir5/dir6
+corso@sistemi-operativi:~$
 \end{minted}
 
 
@@ -241,13 +243,215 @@ Se questo comando viene chiamato senza argomento, stampa un errore a schermo, po
 utilizza quindi il comando \verb|ls| ``List''. Questo comando stampa a schermo la lista di tutti i file o cartelle contenute nella working directory:
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$ ls
-test dir1 dir2 dir3 dir4
+tutorial dir1 dir2 dir3 dir4
+corso@sistemi-operativi:~$
+\end{minted}
+Si può passare come argomento un percorso nel filesystem per vedere i suoi contenuti:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ ls dir4
+dir5
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+Poiché due percorsi vengono separati da spazi, non sembra possibile poter creare una cartella che abbia un nome contenente spazi, un'opzione è utilizzare un underscore \verb|_| al posto degli spazi nella stringa. Poiché 
+questo gestisce la stringa come una singola parola, se si vogliono mantenere le parole differenti bisogna quindi inserire lo spazio nella stringa passata come argomento. 
+Per poter inserire il carattere corrispondente allo spazio, si può incapsulare la stringa che si vuole utilizzare con singoli o doppi apici:\verb|" ... "| o \verb|' ... '|. Oppure si può utilizzare il carattere 
+\verb|\| seguito dallo spazio: \verb|...\ ...|. Questo si chiama carattere di escape, ed indica che il carattere che viene dopo non deve essere interpretato dall'interprete dei comandi, ma appartiene alla stessa 
+stringa che si sta inserendo. Questo carattere di escape è comune per molti linguaggi di programmazione quando si vogliono inserire caratteri speciali nelle stringhe. 
+In generale se sono contenenti spazi in una stringa, questa viene mostrata tra singoli apici. 
+
+
+Oltre a gestire directory, il filesystem gestisce file regolari, ed è possibile crearli e modificarli analogamente alle directory. Il sistema operativo per mostrare a video un'informazione utilizza lo ``Standard Output'' o stdout, collegata al terminale, in modo da mostrare il risultato di ogni comando. La shell quindi legge il contenuto 
+del file dello stdout e lo mostra a video. Poiché i comandi stampano il loro output su questo file virtuale, è possibile stampare gli output su di un file reale, presente nel filesystem. 
+Utilizzando l'operatore di redirezione \verb|>| invia l'output di un comando ad un file, indicando il suo percorso:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ ls > output.txt
+corso@sistemi-operativi:~$
+\end{minted}
+Se il file non esiste, viene creato all'invocazione del comando:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ ls
+tutorial dir1 dir2 dir3 dir4 output.txt
+corso@sistemi-operativi:~$
+\end{minted}
+Si può esplicitare l'estensione del file, ma anche senza l'interprete dei comandi è in grado di creare un file di caratteri ASCII, quindi un file testuale. Per leggere il contenuto di un file quindi è possibile 
+inviare il suo contenuto allo stdout. Uno dei comandi per effettuare questo è \verb|cat|, ``Concatenata''. Prende come argomento la lista dei file di cui si vuole stampare il contenuto a schermo, e produce 
+una concatenazione dei contenuti di questi file:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cat output.txt
+tutorial 
+dir1 
+dir2
+dir3
+dir4
+output.txt
+corso@sistemi-operativi:~$
+\end{minted}
+Se si utilizza il comando \verb|ls| su di un file, questo cerca se esiste il file che stiamo cercando, mostrando il suo nome a schermo:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ ls output.txt
+output.txt
+corso@sistemi-operativi:~$
+\end{minted}
+In realtà stampa il percorso relativo che è stato utilizzato come argomento, poiché il file che stiamo cercando si trova nella working directory, il percorso assoluto di questo output è\\
+\verb|/home/corso/output.txt|. 
+
+L'operatore di redirezione rappresenta un modo abbastanza comune per creare file contenenti il risultato di comandi, o programmi articolati. 
+Per creare dei file arbitrari, si può utilizzare il comando \verb|echo|, insieme ad un operatore di redirezione. Questo comando infatti stampa a video quello che gli viene passato come argomento tra doppi 
+apici:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ echo "test"
+test
+corso@sistemi-operativi:~$
+\end{minted}
+Tramite l'operatore di redirezione si possono quindi realizzare file arbitrari:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ echo "test" > test
+corso@sistemi-operativi:~$
+\end{minted}
+
+L'uso esplicito di un estensione, risale agli anni '80 dove i file venivano differenziati rispetto alla loro estensione, ma i sistemi operativi moderni sono in grado di determinare il contenuto di un file e quindi 
+la sua estensione. Il comando chiamato \verb|file|, seguito dal file di cui si vuole conoscere il tipo:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ file output.txt
+output.txt: ASCII text
+corso@sistemi-operativi:~$ file test
+test: ASCII text
+corso@sistemi-operativi:~$
 \end{minted}
 
 
+L'operatore di redirezione, quando viene utilizzato su di un file, ne tronca il contenuto, lo azzera, per poi scrivere quello che viene passato allo stdout, dal primo byte del file. L'operatore di 
+redirezione \verb|>>| effettua la stessa operazione di \verb|>|, ma scrive all'interno del file senza troncarlo, nel suo spazio vuoto, appendendo il contenuto nuovo alla fine:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ echo "test" >> output.txt
+corso@sistemi-operativi:~$ cat output.txt
+tutorial 
+dir1 
+dir2
+dir3
+dir4
+output.txt
+test
+corso@sistemi-operativi:~$
+\end{minted}
+% $
+
+Se si ha un file contenente un numero elevato di righe o parole, questo non permette di visualizzarlo interamente in una singola schermata. Si può scrollare per visualizzare l'intero file, poiché è contenuto in una 
+finestra grafica che bufferizza tutto quello che succede. Ma per alcune funzioni questo non avviene, quindi si vuole poter determinare le proprietà di un file, senza doverlo visualizzare nella sua integrità. 
+Il comando \verb|less| prende come argomento un percorso, ed alla sua invocazione, trasforma l'interfaccia grafica in un programma di visualizzazione del file, in cui si può scorrere tra le sue righe utilizzando 
+le freccette verso l'alto ed il basso, quando non è disponibile un'interfaccia grafica che permette di scrollare sul file. Questo comando è erede di un altro chiamato \verb|more|, che realizza la stessa operazione 
+in modo più grezzo, con meno funzionalità. 
+Per ritornare alla riga di comando bisogna digitare il tasto \verb|q|. Questo programma offre un suo prompt, all'ultima riga dell'interfaccia grafica indicato da \verb|:|, dove possono essere eseguite 
+operazione sul file aperto. 
 
 
+Per spostare dei file si utilizza il comando ``Move'' \verb|mv| seguito da una serie di argomenti, dove l'ultimo rappresenta il percorso dove vengono spostati i file o directory indicate nei precedenti argomenti:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mv output.txt dir1
+corso@sistemi-operativi:~$ ls dir1
+output.txt
+corso@sistemi-operativi:~$
+\end{minted}
+% $
+Per riportarlo nella directory corrente, si può specificare per intero il percorso di questa, oppure si può utilizzare la directory \verb|.|:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mv dir1/output.txt .
+corso@sistemi-operativi:~$ ls 
+tutorial dir1 dir2 dir3 dir4 output.txt test
+corso@sistemi-operativi:~$
+\end{minted}
+% $
+Questo rappresenta uno degli utilizzi di queste due cartelle \verb|.| e \verb|..| per scrivere comandi in modo estremamente sintetico. 
+Un modo analogo per effettuare quest'operazione consiste nell'usare \verb|..|:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cd dir1
+corso@sistemi-operativi:~/dir1$ mv output.txt ..
+corso@sistemi-operativi:~/dir1$ cd
+corso@sistemi-operativi:~$ ls 
+tutorial dir1 dir2 dir3 dir4 output.txt test
+corso@sistemi-operativi:~$
+\end{minted}
+%$
 
+Quando si utilizza una sequenza di argomenti per il comando \verb|mv|, tutti gli argomenti eccetto l'ultimo sono gli elementi da spostare, mentre l'ultimo indica la destinazione di questi elementi:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mv output.txt test dir3 dir2
+corso@sistemi-operativi:~$ ls dir2
+output.txt test dir3
+corso@sistemi-operativi:~$
+\end{minted}
+Se viene inserito come ultimo elemento un file, produce un errore. 
+
+Il comando \verb|cp| ``Copy'', copia un file di origine, in un percorso specificato del filesystem:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cp dir2/output.txt .
+corso@sistemi-operativi:~$ ls
+tutorial dir1 dir2 dir4 output.txt
+corso@sistemi-operativi:~$
+\end{minted} 
+%$
+
+Quando si effettua sulla stessa directory contenente il file origine, bisogna specificare un nuovo nome per questo file, altrimenti si rischierebbe di sovrascriverlo. Si realizza specificando un altro file, 
+che il sistema crea all'invocazione del comando:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cp output.txt output\ copy.txt
+corso@sistemi-operativi:~$ ls
+tutorial dir1 dir2 dir4 output.txt 'output copy.txt'
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+In una singola operazione quindi è possibile creare una copia di un file in una directory, scegliendo un nome differente. Utilizzando il comando \verb|mv| è possibile rinominare un file, specificando come 
+ultimo argomento il suo nuovo nome:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mv dir2/test dir2/test2
+corso@sistemi-operativi:~$ ls dir2
+output.txt test2 dir3
+corso@sistemi-operativi:~$
+\end{minted} 
+%$ 
+Quindi se l'ultimo argomento è un file, il comando non può supportare una lista di elementi da spostare. \'{E} possibile rinominare allo stesso modo una cartella, mantenendo gli elementi contenuti:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ mv dir2 dirX
+corso@sistemi-operativi:~$ ls dirX
+output.txt test2 dir3
+corso@sistemi-operativi:~$ mv dirX dir2
+corso@sistemi-operativi:~$ ls dir2
+output.txt test2 dir3
+corso@sistemi-operativi:~$
+\end{minted}
+%$
+
+Per rimuovere file, o cartelle in certe condizioni, si può utilizzare il comando ``Remove'' \verb|rm|, seguito dal percorso dove si trova l'elemento da eliminare:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ rm dir2/test2
+corso@sistemi-operativi:~$ ls dir2
+output.txt dir3
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+Questo comando non richiede conferme, quindi non è possibile correggere l'errore, come è possibile in sistemi operativi analoghi a Windows, dove è disponibile una cartella ``Cestino'' dove sono contenuti gli 
+elementi eliminati. Per rimuovere le directory invece si può utilizzare il comando \verb|rmdir|, ``Remove Directory'':
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ rmdir dir1
+corso@sistemi-operativi:~$ ls
+tutorial dir2 dir4 output.txt 'output copy.txt'
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+Tuttavia questo non può essere effettuato per directory non vuote: 
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ rmdir dir2
+rmdir: failed to remove 'dir2': Directory no empty 
+corso@sistemi-operativi:~$
+\end{minted}
+
+Allora per rimuovere questa cartella, si potrebbero rimuovere manualmente tutti i suoi file, risalendo fino a \verb|dir2|. Esiste un'opzione che semplifica questo procedimento, effettuando una rimozione ricorsiva, 
+rimuovendo tutti gli elementi contenuti all'interno del percorso specificato, prima di rimuovere gli elementi superiori. Quest'opzione di \verb|rm| scende fino alle foglie, dato il percorso specificato, e le rimuovere, 
+risalendo nell'albero fino a quando non è in grado di rimuovere tutto il percorso passato come argomento. 
+
+
+%% TODO aggiungere lezioni 30 set; 1 ott
 
 \clearpage
 
@@ -345,7 +549,7 @@ Si utilizza un altro programma offerto dal docente per poter analizzare il compo
 	#include "common.h"
 
 	int main(int argc, char *argv[]) {
-		int *p = malloc(sizeof(int)); // a1: allocate some 	memory
+		int *p = malloc(sizeof(int)); // a1: allocate some memory
 		assert(p != NULL);
 		printf("(%d) address of p: %08x\n",
 		getpid(), (unsigned) p); // a2: print out the address of the memory
@@ -384,20 +588,20 @@ Si considera il seguente codice \verb|thread.c|:
 		return NULL;
 	}
 	int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		fprintf(stderr, "usage: threads<value>\n");
-		exit(1);
-	}
-	loops = atoi(argv[1]);
-	pthread_t p1, p2;
-	printf("Initial value : %d\n", counter);
+        if (argc != 2) {
+            fprintf(stderr, "usage: threads<value>\n");
+            exit(1);
+        }
+        loops = atoi(argv[1]);
+        pthread_t p1, p2;
+        printf("Initial value : %d\n", counter);
 
-	Pthread_create(&p1, NULL, worker, NULL);
-	Pthread_create(&p2, NULL, worker, NULL);
-	Pthread_join(p1, NULL);
-	Pthread_join(p2, NULL);
-	printf("Final value : %d\n", counter);
-	return 0;
+        Pthread_create(&p1, NULL, worker, NULL);
+        Pthread_create(&p2, NULL, worker, NULL);
+        Pthread_join(p1, NULL);
+        Pthread_join(p2, NULL);
+        printf("Final value : %d\n", counter);
+        return 0;
 	}
 \end{minted}
 
@@ -423,20 +627,20 @@ da essere disponibile in futuro, e corregge e gestisce eventuali errori che potr
 
 Si considera il seguente codice per la creazione di un file con scritto ``Hello World'' alla directory \verb|/tmp/file| del container Linux:
 \begin{minted}{c}
-	#include <stdio.h>
-	#include <unistd.h>
-	#include <assert.h>
-	#include <fcntl.h>
-	#include <sys/types.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <assert.h>
+    #include <fcntl.h>
+    #include <sys/types.h>
 
-	int	main(int argc, char *argv[]) {
-		int fd = open("/tmp/file", O_WRONLY | O_CREAT| O_TRUNC, S_IRWXU);
-		assert(fd > -1);
-		int rc = write(fd, "hello world\n", 13);
-		assert(rc == 13);
-		close(fd);
-		return 0;
-	}
+    int main(int argc, char *argv[]) {
+        int fd = open("/tmp/file", O_WRONLY | O_CREAT| O_TRUNC, S_IRWXU);
+        assert(fd > -1);
+        int rc = write(fd, "hello world\n", 13);
+        assert(rc == 13);
+        close(fd);
+        return 0;
+    }
 \end{minted}
 
 
