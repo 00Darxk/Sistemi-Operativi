@@ -168,6 +168,8 @@ di comando. Al posto di questo carattere può essere presente un cancelletto \ve
 
 Quando viene effettuato un comando, viene restituito un output a schermo, ed alla riga successiva, viene riproposto il prompt dei comandi. Non necessariamente tutti i comandi producono un output visivo a schermo. 
 
+\subsection{Comandi su Directory}
+
 Il comando \verb|pwd| ``Print Working Directory'' stampa a schermo la directory corrente dove si sta lavorando. 
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$ pwd
@@ -260,6 +262,7 @@ Per poter inserire il carattere corrispondente allo spazio, si può incapsulare 
 stringa che si sta inserendo. Questo carattere di escape è comune per molti linguaggi di programmazione quando si vogliono inserire caratteri speciali nelle stringhe. 
 In generale se sono contenenti spazi in una stringa, questa viene mostrata tra singoli apici. 
 
+\subsection{Comandi su File}
 
 Oltre a gestire directory, il filesystem gestisce file regolari, ed è possibile crearli e modificarli analogamente alle directory. Il sistema operativo per mostrare a video un'informazione utilizza lo ``Standard Output'' o stdout, collegata al terminale, in modo da mostrare il risultato di ogni comando. La shell quindi legge il contenuto 
 del file dello stdout e lo mostra a video. Poiché i comandi stampano il loro output su questo file virtuale, è possibile stampare gli output su di un file reale, presente nel filesystem. 
@@ -342,9 +345,10 @@ finestra grafica che bufferizza tutto quello che succede. Ma per alcune funzioni
 Il comando \verb|less| prende come argomento un percorso, ed alla sua invocazione, trasforma l'interfaccia grafica in un programma di visualizzazione del file, in cui si può scorrere tra le sue righe utilizzando 
 le freccette verso l'alto ed il basso, quando non è disponibile un'interfaccia grafica che permette di scrollare sul file. Questo comando è erede di un altro chiamato \verb|more|, che realizza la stessa operazione 
 in modo più grezzo, con meno funzionalità. 
-Per ritornare alla riga di comando bisogna digitare il tasto \verb|q|. Questo programma offre un suo prompt, all'ultima riga dell'interfaccia grafica indicato da \verb|:|, dove possono essere eseguite 
+Per ritornare alla riga di comando bisogna digitare il tasto \verb|Q|. Questo programma offre un suo prompt, all'ultima riga dell'interfaccia grafica indicato da \verb|:|, dove possono essere eseguite 
 operazione sul file aperto. 
 
+\subsection{Spostamento e Copia di Elementi}
 
 Per spostare dei file si utilizza il comando ``Move'' \verb|mv| seguito da una serie di argomenti, dove l'ultimo rappresenta il percorso dove vengono spostati i file o directory indicate nei precedenti argomenti:
 \begin{minted}{powershell}
@@ -691,6 +695,8 @@ dei processi:
 	\item Status: permette di ottenere informazioni riguardo il processo attuale.  
 \end{itemize}
 
+\subsubsection{Creazione di un Processo}
+
 Per effettuare un'operazione di creazione il sistema operativo effettua una serie di operazioni. Durante l'operazioni di ``Load'' alloca lo spazio in memoria centrale per accomodare il programma. In seguito il programma, memorizzato 
 sulla memoria secondaria in formato eseguibile, e viene trasferito in maniera ``lazy'', pigra. Non viene trasferita la sua integrità, ma solo le istruzioni 
 strettamente necessarie all'esecuzione del programma, e vengono trasferite ulteriori istruzioni quando vengono richieste da altre istruzioni nel processo in 
@@ -709,6 +715,7 @@ Canali attraverso cui il processo è in grado di comunicare con l'ambiente ester
 Alla fine di questo meccanismo di creazione, il sistema operativo trasferisce il controllo della CPU al processo, iniziando dalla prima istruzione dopo la funzione 
 \verb|main()|, punto di ingresso in molti linguaggi di programmazione. 
 
+\subsubsection{Divisione in Stati}
 
 Un processo può esser in tre stadi distinti durante la sua esecuzione. Il sistema operativo gestisce la transizione tra questi stati e garantisce che i processi 
 vengano eseguiti correttamente, in modo efficiente. 
@@ -772,7 +779,7 @@ Questo codice mostra come il sistema \verb|xv6| traccia e gestisce i vari proces
 vari processi viene salvata nella struttura di tipo \verb|proc|. Queste informazioni permettono di eseguire, terminare o riprendere l'esecuzione di un processo. Fornisce 
 informazioni sulla memoria utilizzata dal processo, i registri utilizzati, il suo stato, i file aperti e la directory corrente, il puntatore al processore genitore. 
 
-
+\subsubsection{User e Kernel Mode}
 
 Il sistema operativo deve effettuare queste operazioni di time sharing efficientemente. Quindi bisogna minimizzare il tempo tra la fine di un processo e l'inizio del 
 successivo. In questo modo si minimizza l'overhead. Oltre a risolvere questo problema di overhead, il sistema operativo deve riprendere il controllo dopo che il quanto 
@@ -801,6 +808,8 @@ richieste dai processi nello spazio utente, in questo modo gli permette di effet
 In generale per distinguere tra queste due modalità, è presente un flag in un registro del processore per segnalare in quale modalità ci si trova. In questo modo il 
 processore può rifiutare le istruzioni ristrette in base al valore di questo flag. In pratica abilita il set completo delle istruzioni del kernel. 
 
+\subsubsection{Chiamate di Sistema}
+
 Si utilizzano le chiamate di sistema, interfaccia sicura e standardizzata per permettere ai processi di accedere a risorse di sistema o servizi critici. Permettono di 
 eseguire operazioni come accedere al filesystem, creare o distruggere processi, comunicare con altri processi o allocare memoria. Per eseguire una chiamata di sistema 
 il processo invoca una speciale istruzione di ``trap'', che effettua insieme un salto nel kernel, ed un aumento del livello di privilegio alla modalità kernel. 
@@ -819,6 +828,7 @@ Questa chiamate di sistema rappresentano l'unica un'interfaccia o API tra il pro
 trap table. 
 A livello di hardware viene impostato su un registro l'indirizzo del gestore delle chiamate di sistema. 
 
+\subsubsection{Ciclo di Vita di un Processo}
 
 All'avvio di un programma viene creata un'entità processo da parte del sistema operativo, per allocare la memoria, ad una struttura dati del processo di tipo \verb|proc|. 
 Il codice del programma viene poi trasferito in memoria centrale, dal disco, in maniera lazy, ovvero trasferendo solamente il codice strettamente 
@@ -838,6 +848,8 @@ Il processore rimuove i valori salvati nello stack del kernel e si sposta allo s
 
 Alla terminazione del processo non bisogna salvare i suoi valori poiché non avrà modo di effettuare altre chiamate di sistema, quindi l'hardware non svolge nessuna 
 operazione. Il kernel quindi svuota svuota l'area di memoria assegnata al processo e lo rimuove dalla struttura dati utilizzata per contenere la lista dei processi. 
+
+\subsubsection{Gestione Efficiente dei Processi}
 
 Il sistema operativo ha come obiettivo la ricerca di prestazioni più alte possibili, bisogna quindi evitare di inserire livelli in più tra il processo al processore, per 
 impedire rallentamenti nell'esecuzione del processo. Ma allo stesso tempo si vuole mantenere il controllo del processore da parte del sistema operativo. 
@@ -890,10 +902,14 @@ lavoro di un job, si calcola come la differenza tra il tempo di arrivo ed il tem
 si impone sia nullo. Quindi con queste assunzioni il tempo di turnaround corrisponde al tempo ci completamento. 
 La seconda metrica è la fairness, quanto le risorse vengono divise in modo equo rispetto a tutti i processi. 
 
+\subsubsection{First Come, First Served}
+
 La prima politica di scheduling è la FIFO, o FCFS, ``First Come, First Served'', semplice e di facile implementazione. Si suppone arrivino sequenzialmente a distanza 
 temporale minima, il primo job ad arrivare sarà il primo ad essere eseguito. 
 
 %% TODO img scheduling su asse temporale 
+
+\subsubsection{Shortest Job First}
 
 Nel momento in cui si considerano situazioni più realistiche, questa politica perde di efficienza, poiché il primo job potrebbe richiedere un tempo molto superiore ai 
 successivi, quindi si verifica l'effetto convoglio. Il primo ``vagone'' è molto più grosso dei seguenti e quindi il turnaround time è molto elevato. 
@@ -904,11 +920,15 @@ SJF ``Shortest Job First'', noto il tempo di esecuzione. In questo modo si minim
 In uno scenario più realistico, non tutti i job  arrivano nello stesso momento nel sistema, quindi è possibile che il primo lavoro che arriva sia l'unico possibile da 
 eseguire, e sia anche il più lungo, quindi in queste condizioni si verifica nuovamente l'effetto convoglio. 
 
+\subsubsection{Shortest Time to Completion First}
+
 Per cui si considera un sistema dove se arriva un job che richiede un tempo minore per essere completato, viene interrotta l'esecuzione del processo attuale e viene 
 eseguito questo nuovo processo. Questa politica si chiama STCF ``Shortest Time to Completion First'', aggiunge un meccanismo di prevenzione a SJF, quindi viene chiamato 
 anche PSJF, ``Preemptive Shortest Job FIrst''. Ogni volta che un job entra nel sistema ne calcola il tempo di completamento e se è minore del processo attualmente in 
 esecuzione allora si interrompe l'esecuzione del processo corrente e si esegue il nuovo processo. Quindi all'arrivo di un nuovo processo, il sistema operativo deve 
 determinare il tempo di completamento per questi nuovi processi e per il processo attualmente in esecuzione. 
+
+\subsubsection{Round Robin}
 
 Esistono altre metriche altrettanto significative come il tempo di risposta, definito come il tempo in cui il job è stato in coda, prima di essere eseguito per la prima 
 volta. Un modo per minimizzare o controllare il tempo di risposta per un determinato job si considera la politica di scheduling ``Round Robin'' (RR). Questa politica effettua 
@@ -930,7 +950,106 @@ blocked.
 
 %% TODO aggiungere "incorporating I/O"
 
+\subsubsection{Multi-Level Feedback Queue}
 
+In questi algoritmi il turnaround time ed il tempo di risposta sono inversamente proporzionali tra di loro, e non è stato possibile trovare un bilanciamento tra di loro. 
+Queste due famiglie di algoritmi che minimizzano queste due caratteristiche sono separati fra di loro, e supportano due tipologie di programmi separate. Si utilizzano 
+politiche di tipo round robin per programmi interattivi, dove si vuole minimizzare il tempo di attesa con l'utente stesso. Invece per i sistemi batch si vuole 
+minimizzare il tempo di esecuzione complessivo del sistema, e si massimizza il throughput dei job realizzabili. 
+L'algoritmo ``Multi-Level Feedback Queue'' MLFQ, si ottiene rilassando il vincolo sulla conoscenza a priori la durata di un job. Questo algoritmo prova ad minimizzare 
+entrambi questi parametri. 
+Questo algoritmo ha una serie di regole basi. Si assume che esistano una serie di code, gestite in base a livelli di priorità, quindi non permette all'utente di 
+variare il livello di priorità di un job. Rappresenta un meccanismo interno utilizzato per inseguire gli obiettivi dell'algoritmo. 
+
+Se è presente un job nella coda a priorità più alta, sicuramente verrà eseguito. Queste varie code contengono job di stessa priorità, questi job di pari priorità 
+verranno eseguiti in modalità RR. 
+In base a queste due regole l'algoritmo è in grado di minimizzare queste due parametri caratteristici. Inoltre utilizza dei meccanismi di analisi del comportamento 
+dei job per poter determinare dinamicamente la loro priorità. 
+Se un job continuamente rilascia la CPU, per continue operazioni di I/O si vuole mantenere la sua priorità alta, si tratta quindi di un job interattivo, e si vuole 
+ridurre il più possibile il suo tempo di risposta. Un job che non rilascia mai la CPU invece viene associato ad una priorità minore, poiché si comporta come un job di 
+tipo batch. Questi tipi di job verranno messi nella coda più bassa, quindi si aumenta il loro turnaround time, ma poiché ha un tempo di completamento molto elevato, il 
+turnaround time non rappresenta un overhead significativo. 
+Una terza regola impone che ogni job al primo arrivo nel sistema sia trattato come un job interattivo. 
+
+Per la quarta regola, se un job impiega l'intero quanto di tempo assegnatoli, allora diminuisce la sua priorità. Se un job rilascia la CPU prima del termine dell'intervallo 
+di tempo concessogli, allora la sua priorità rimane invariata. 
+
+%% TODO img job di lunga esecuzione: discesa da Q2->Q1->Q0 
+
+Con l'insieme di regole definite, questo algoritmo approssima l'algoritmo STCF, ma allo tesso tempo non assume di conoscere la lunghezza di un job. Se un job di priorità 
+elevata, e quindi di durata, probabilmente, minore, arriva nel sistema; questo interrompe l'esecuzione del job di priorità più bassa e durata maggiore per eseguire il job 
+di priorità più alta. Questo emula il comportamento di STCF. 
+
+Questo algoritmo tuttavia non è perfetto. Se sono presenti abbastanza job interattivi per saturare la CPU, allora i nelle code di priorità di livello inferiore potrebbero 
+andare in ``starvation'', ovvero le risorse del sistema non verranno mai assegnate a loro. 
+Inoltre è possibile ingannare lo scheduler, un programma malevolo potrebbe eseguire una serie di operazioni ed in seguito richiedere un'operazione di I/O, riceverà 
+più operazioni di quanto un sistema a regime potrebbe. In questo modo si potrebbe usare l'intervallo di tempo assegnato per la maggior parte, ed in seguito rilasciare 
+la CPU poco prima dello scadere. 
+Un programma invece potrebbe cambiare il suo comportamento nel tempo, cambiando da un job batch ed interattivo. 
+
+Per provare a risolvere questi problemi, si introduce una nuova regola. Dopo un certo intervallo di tempo tutti i job nel sistema vengono inseriti nella coda più alta. 
+Questo ``Priority Boost'' consente ai programmi in rischio di starvation di avere una possibilità nell'essere eseguiti. Allo stesso modo per i programmi in cui cambiano di 
+comportamento, infatti potrebbero essere elevati di priorità al loro cambiamento. 
+
+Non è possibile conoscere in termini generali il tempo di attesa per effettuare questo priority boost, cambia da sistema a sistema, e rappresenta uno dei parametri più 
+importanti di questo algoritmo. 
+
+
+Un sistema antivirus per effettuare controlli degli altri job, richiederebbe di un livello di priorità ancora superiore. Per risolvere questo gli antivirus vengono inseriti 
+in una parte specifica del kernel, in modo che possono effettuare i loro controlli al tempo di context switch. 
+
+Invece per evitare che lo scheduler venga ingannato viene modificata la quarta regola dell'algoritmo. In questo modo impone che tutti i job che hanno utilizzato 
+complessivamente tutto il loro quanto di tempo, avranno la loro priorità ridotta. Non solo quindi se esaurisce il quanto di tempo a sua disposizione. 
+
+La maggior parte degli algoritmi MLFQ utilizzano quanti di tempo elevati per code di bassa priorità, nell'ordine dei 100 ms, e tempi nell'ordine dei 10 ms per code di 
+priorità più elevata. 
+
+Il sistema UNIX Solaris implementa l'algoritmo MLFQ utilizzando 60 code diverse, con un aumento graduale dell'intervallo di tempo assegnato ad ogni job, dai 20 alle 
+centinaia di millisecondi. Ed effettua un priorità boost ogni secondo circa. 
+
+%% TODO itemize cinque regole ppt. 
+
+\subsubsection{Completely Fair Scheduling}
+
+Circa il 5\% del tempo di CPU di tutti i data center Google sia dedicato allo scheduling, quindi è di principale importanza definire algoritmi di scheduling 
+efficienti per migliorare le prestazioni. 
+
+Il sistema Linux utilizza un algoritmo diverso per effettuare il suo scheduling, chiamato ``Completely Fair Scheduling'' (CFS), lo scheduler attuale di tutte le macchine 
+Linux. Le sue principali caratteristiche sono l'assenza di un quanto di tempo fisso, il supporto delle priorità, modificabili da parte dell'utente. Questo controllo 
+viene gestito tramite un parametro chiamato ``nice'', per definire quanto un processo debba essere gentile rispetto ad altri processi. I valori di nice negativi 
+indicano una priorità elevata. Utilizza inoltre delle strutture dati molto efficienti per la ricerca, l'inserimento e l'eliminazione dei processi. 
+
+
+Il parametro ``virtual runtime'', vruntime, rappresenta per quanto tempo il processo è stato eseguito dal momento in cui è stato avviato. Viene incrementato 
+proporzionalmente rispetto al tempo reale di utilizzo della CPU. In generale l'algoritmo CFS seleziona sempre il processo di vruntime più basso. 
+
+Il parametro sched\_latency indica l'intervallo di tempo dove viene eseguita la suddivisione in quanti temporali. Definendo questo parametro, è possibile 
+garantire vincoli impliciti al tempo di risposta. Un valore tipico è di 48 ms. La durata di un quanto di tempo corrisponde a questo valore diviso per il numero di processi 
+nel sistema. 
+
+
+Il parametro min\_granularity indica l'intervallo minimo per un quanto di tempo, in modo da garantire che l'overhead del tempo di scheduling non sia eccessivo. 
+Quando si arriva a questo tempo viene incrementato lo sched\_latency. Ne risente il tempo di risposta del sistema, ed è indecidibile. Il valore di niceness varia 
+tra -20 a +19. Questi valori vengono implicitamente tradotti con dei pesi a dei livelli di priorità- 
+
+Invece di assegnare in modo completamente equo il quanto di tempo, l'intervallo di tempo destinato ad un singolo processo non è lo stesso. Dato un processo $k$, 
+il suo intervallo di tempo si ottiene dalla formula:
+\begin{equation}
+    \mathrm{time\_slice}_k=\displaystyle\frac{\mathrm{weight}_k}{\displaystyle\sum_{i=0}^{n-1}\mathrm{weight}_i}\cdot\mathrm{sched\_latency}
+\end{equation}
+
+Il quanto di tempo associato ad un processo $k$ aumenta all'aumentare della suo contributo al peso totale di tutti i processi. In presenza di processi di priorità 
+più alta allora bisogna aumentare il loro vruntime di una quantità minore rispetto agli altri processi. Questo vruntime equivale al tempo di esecuzione bilanciato dal 
+peso:
+\begin{equation}
+    \mathrm{vruntime}_i=\mathrm{vruntime}_i+\displaystyle\frac{\mathrm{weight}_0}{\mathrm{weight}_i}\cdot\mathrm{runtime}_i
+\end{equation}
+
+
+Questo algoritmo utilizza un albero rosso-nero per memorizzare i processi in coda. Questo è un albero binario, automaticamente bilanciato ad ogni inserimento o 
+rimozione di un nodo. Vengono mantenuti solo i processi di stato running o ready, i processi in stato di blocked vengono rimossi da questo albero. Permette di 
+individuare in tempo efficiente il processo con il vruntime minore. 
+Se un processo vuole effettuare un'operazione di I/O, il suo vruntime rimane costante mentre il valore degli altri processi in esecuzione aumenta. %% TODO in caso di I/O
 
 
 \end{document}
