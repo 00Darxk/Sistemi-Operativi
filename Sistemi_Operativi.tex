@@ -41,7 +41,7 @@
 }
 \fancypagestyle{link}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{Sorgente del file LaTeX disponibile al seguente link: \url{https://github.com/00Darxk/Sistemi-Operativi}}}
 
-\begin{document}
+\begin{document}    
 
 \title{%
     \textbf{Sistemi Operativi}  \\ 
@@ -124,31 +124,31 @@ In questo corso si utilizzerà l'immagine, presente nel docker hub, \verb|chmod8
 
 Per creare un container sulla base di questa immagine, bisogna scaricarla con i seguenti comandi:
 \begin{minted}{powershell}
-  docker image pull chmod84/os2425
+prompt> docker image pull chmod84/os2425
 \end{minted}
 Questo comando di default prende l'ultima versione dell'immagine disponibile, in caso si voglia utilizzare una versione specifica si indica con \verb|:| seguito dal numero di versione oppure \verb|latest|, per l'ultima 
 versione disponibile. Questo tag viene associato dal produttore della versione arbitrariamente, quindi potrebbe non corrispondere all'ultima versione esistente dell'immagine. 
 In seguito per creare ed avviare il container si usa il seguente comando:
 \begin{minted}{powershell}
-  docker container --name os2425
-  --hostname sistemi-operativi -v dati:/corso -it chmod84/os2425
+prompt> docker container --name os2425 
+        --hostname sistemi-operativi -v dati:/corso -it chmod84/os2425
 \end{minted}
 Questo comando crea un volume chiamato ``corso'' nella root del filesystem. 
 
 Per avviare o terminare un container si usano i comandi:
 \begin{minted}{powershell}
-  docker container start os2425
-  docker container stop os2425
+prompt> docker container start os2425
+prompt> docker container stop os2425
 \end{minted}
 
 Per aggiornare l'immagine bisogna prima rimuovere il vecchio container:
 \begin{minted}{powershell}
-  docker container rm os2425
+prompt> docker container rm os2425
 \end{minted}
 In seguito si effettua una pull della nuova immagine e si crea il container come descritto precedentemente. Per avviare la shell di un container precedentemente avviato si utilizza il 
 seguente comando:
 \begin{minted}{powershell}
-  docker container exec -it os2425 /bin/bash
+prompt> docker container exec -it os2425 /bin/bash
 \end{minted}
 
 \clearpage
@@ -456,6 +456,184 @@ risalendo nell'albero fino a quando non è in grado di rimuovere tutto il percor
 
 
 %% TODO aggiungere lezioni 30 set; 1 ott
+
+\subsection{Scrittura di File e Chiamate di Sistema}
+
+Si può utilizzare un editor di testo nativo alla command line, accessibile tramite il comando \verb|nano|, per poter creare file C. 
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ nano hello.c
+\end{minted}
+%$ 
+All'interno dell'editor, in basso sono presenti gli shortcut disponibili, per salvare un file si utilizza il comando ``Ctrl+O'', ed in seguito si inserisce il nome 
+del file e si conferma con invio. Per uscire dall'editor si utilizza il comando ``Ctrl+X''. 
+
+Si crea questo file dove è presente una singola istruzione di stampa della stringa \verb|Hello World|:
+\begin{minted}{c}
+#include <stdio.h>
+
+int main(){
+    printf("Hello World\n");
+}
+\end{minted}
+
+Sono compilabili con la stessa sintassi dei precedenti codici, tramite l'interprete gcc:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ gcc -o hello hello.c
+corso@sistemi-operativi:~$ ./hello
+Hello World
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+
+Invece di scrivere direttamente il codice sul container, è possibile trasferire un file scritto sulla macchina host, con il comando \verb|cp| 
+seguito dal nome del file da copiare sul container. Bisogna anche specificare dove bisogna salvare il file, si indica il nome del container e dopo i due punti il percorso 
+assoluto al suo interno:
+\begin{minted}{powershell}
+prompt> docker cp hello.c os2425:/home/corso 
+\end{minted}
+
+
+Dentro la directory \verb|/ostep-code/| sono presenti molti codici con esempi di \ref{sec:sys-call}, analizzate in questo corso. 
+
+Il comando \verb|man| fornisce le pagine di manuali relativi alla chiamata di sistema o comando forniti come argomenti. Ognuna di queste pagina di manuale contiene una 
+sezione che specifica i possibili valori di ritorno di questa chiamata di sistema. Questo manuale è disponibile in ogni sistema Linux, e rappresenta una delle 
+funzioni più utili disponibili in un sistema operativo, poiché fornisce tutte le informazioni necessarie per utilizzare le chiamate di sistema nella programmazione. 
+
+La maggior parte delle pagine relative a chiamate di sistema sono divise in sezioni. Una prima sezione fornisce una descrizione sintetica del suo funzionamento, 
+e viene descritta la sua sintassi, e le librerie necessarie per essere utilizzate. Molte di queste chiamate di sistema restituiscono un valore di tipo \verb|pid_t|, 
+essenzialmente un intero, ma fornisce informazioni aggiuntive quando viene riferito a dei processi. Segue una descrizione estesa della chiamata. 
+Ognuna di queste pagine contiene una sezione per i valori i ritorno, molto utili per interpretare il comportamento della funzione. 
+Per scorrere tra le varie pagine del manuale di una funzione si utilizza il tasto \verb|F|, mentre per chiudere il manuale si utilizza il tasto \verb|Q|. 
+
+Poiché è un elemento molto complesso, esiste una pagina di manuale dedicata ad esso stesso, che spiega come è diviso ed in quale capitoli trovare quello che si sta 
+cercando. Questa suddivisione permette di risolvere omonimie. Per accedere alle pagine di manuale dedicate ad una di queste funzioni omonime, se non si vuole accedere 
+alla prima, si inserisce prima del nome della chiamata di sistema. 
+
+Alcune di queste chiamate di sistema, non sono vere e proprie chiamate di sistema, ma rappresentano delle versioni ``wrapped'' di vere chiamate di sistema. 
+
+Per spostare la cartella di interessa si utilizza la flag \verb|-r| sul comando \verb|cp| che copia ricorsivamente una cartella:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cd /ostep-code/
+corso@sistemi-operativi:/ostep-code$ cp -r cpu-api/ /home/corso 
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+
+Nel file \verb|p1.c| sono presenti delle semplici chiamate di sistema:
+\begin{minted}{c}
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char *argv[]) {
+    printf("hello world (pid:%d)\n", (int) getpid());
+    int rc = fork();
+    if (rc < 0) { // fork failed; exit
+        fprintf(stderr, "fork failed\n");
+        exit(1);
+    } else if (rc == 0) { // child (new process)
+        printf("hello, I am child (pid:%d)\n", (int) getpid());
+    } else { // parent goes down this path (original process)
+        printf("hello, I am parent of %d (pid:%d)\n", rc, (int) getpid());
+    }
+    return 0;
+}
+\end{minted}
+
+
+La funzione \verb|getpid()| restituisce il ``Process ID'', pid, del processo che l'ha invocato. 
+La funzione \verb|fork()| crea un'altra istanza dello stesso processo, duplicando la memoria, un uno spazio separato, ma ha lo stesso 
+contenuto, tranne per il valore di ritorno di questa funzione. Per il processo padre è il pid del padre, mentre per il figlio è esattamente 0. Per entrambi i processi 
+la prima istruzione da eseguire è la prima istruzione seguente al fork. 
+
+Questo programma stampa il pid di questi due processi, verificando con un'istruzione condizionale il loro valore di ritorno. 
+Non rappresenta un'esecuzione tramite threads, poiché non avviene sullo stesso spazio di memoria, e non sono presenti variabili condivise, che potrebbero generare 
+conflitti, analizzati successivamente. Poiché questi processi vengono eseguiti su spazi di memoria isolati tra di loro, non per scambiarsi dati tra di loro devono 
+utilizzare ulteriori chiamate di sistema come per generare collegamenti come ``pipe'' o ``socket''. 
+
+Quando viene eseguito questo file \verb|p1.c| non è garantito che venga sempre eseguito prima il processo padre e poi il processo figlio. Non è possibile 
+conoscere a priori in termini generali come lo scheduler decide di gestire il processo padre ed il processo figlio. Nella vita reale potrebbe essere richiesto sincronizzare 
+due processi, quindi bisognerebbe poter controllare il quando vengono eseguiti rispetto agli altri. Per risolvere questo problema ed inserire un 
+ordine certo e noto a priori a questo output, si utilizza la funzione \verb|wait()| per introdurre un meccanismo di attesa. 
+
+
+Nel file p2.c è contenuta la chiamata di sistema \verb|wait()|, la funzione attende il cambiamento di stato di un processo, non solo la sua terminazione: 
+\begin{minted}{c}
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <unistd.h>
+    
+    int main(int argc, char *argv[]) {
+        printf("hello world (pid:%d)\n", (int) getpid());
+        int rc = fork();
+        if (rc < 0) { // fork failed; exit
+            fprintf(stderr, "fork failed\n");
+            exit(1);
+        } else if (rc == 0) { // child (new process)
+            printf("hello, I am child (pid:%d)\n", (int) getpid());
+            sleep(1)
+        } else { // parent goes down this path (original process)
+            int wc = wait(NULL)
+            printf("hello, I am parent of %d (wc: %d) (pid:%d)\n", 
+                    rc, wc, (int) getpid());
+        }
+        return 0;
+    }
+\end{minted}
+Questa funzione prendo come argomento un puntatore ad intero di tipo \verb|Nullable|, quindi si può utilizzare il puntatore 
+\verb|null|, se non si vuole catturare il valore di ritorno. Esistono tre varianti della funzione \verb|wait()|, \verb|waitpid()| e \verb|waitid()|. 
+Il valore restituito dalla funzione è di tipo \verb|pid_t|, o \verb|int|, solo per \verb|waitid()|, in caso di terminazione rappresenta l'id del processo terminato, 
+oppure -1 se la funzione ha riscontrato errori o ha fallito. 
+La prima funzione attende il cambiamento di un qualsiasi processo, la seconda attende il cambiamento di un processo specifico. 
+
+Queste funzioni vengono utilizzate per osservare il cambiamento di stato dei figli nel processo chiamante. Un cambiamento di stato sono la terminazione, l'aver 
+ricevuto un ricevuto un segnale ed avere interrotto l'esecuzione o continuato l'esecuzione. Quando un figlio viene terminato, tramite una wait è possibile liberare 
+le risorse associate al processo figlio.  
+La differenza rispetto all'esecuzione di \verb|p1.c| è che il processo padre non può stampare la sua riga di testo se non è stato eseguito il processo figlio, tramite 
+una funzione \verb|wait()|. 
+
+
+
+Per scrivere all'interno di un file, da creare o già esistere, si utilizzano tre chiamate di sistema, la \verb|open()| per aprire il file e permettere di 
+modificarlo, la \verb|write()| per scrivere all'interno del file, e si utilizza la \verb|close()| per chiudere il file aperto. Dalle pagine di manuale si osserva 
+che la funzione \verb|open()| necessita della librerie \verb|fcntl.h| e richiede come argomento una stringa che contiene il percorso al file che si vuole aprire, o 
+creare. Si può specificare inoltre il suo comportamento, e bisogna specificare la modalità del file, ovvero i suoi permessi, in caso si decida di crearlo. Si può 
+concatenare la scrittura, troncare il file, oppure crearne uno nuovo, in base alle flag specificate nella \verb|open()|. 
+Queste flag possono essere concatenate insieme, tramite l'operatore \verb|||. Si utilizzano le seguenti flag per indicare di troncare il file in caso esista, altrimenti 
+di crearlo e di assegnare privilegi di lettura e scrittura al possessore dello stesso. Inoltre si specifica la modalità di accesso: in solo lettura, solo scrittura, oppure 
+lettura e scrittura. In questo caso si apre in modalità di sola scrittura:
+\begin{minted}{c}
+    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
+\end{minted}
+
+Quando un file viene aperto in un sistema Linux, il sistema operativo mette a disposizione un riferimento al file, un ``File Descriptor'', contenuto in un intero. 
+Nelle seguenti operazioni si userà il FD, invece del percorso del file, per accedere al file aperto. Se non viene specificato il percorso del file, viene creato 
+nella working directory. 
+
+Per effettivamente scrivere dentro al file si utilizza la funzione \verb|write()|, che prende come argomento il FD, un buffer da cui prende cosa scrivere, ed un 
+intero che specifica fino a quando deve continuare a scrivere byte per byte. Questa funzione richiede dell'ulteriore librerie \verb|unistd.h|:
+\begin{minted}{c}
+    char* txt = "test";
+    write(fd, txt, strlen(txt));
+\end{minted}
+
+Dopo aver effettuato queste modifiche si può chiudere il file tramite la \verb|close()|, dato il FD. Si ha quindi un file completo del tipo:
+\begin{minted}{c}
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(){
+    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
+
+    char* txt = "test";
+    write(fd, txt, strlen(txt));
+
+    close(fd);
+}
+\end{minted}
+
 
 \clearpage
 
@@ -809,6 +987,7 @@ In generale per distinguere tra queste due modalità, è presente un flag in un 
 processore può rifiutare le istruzioni ristrette in base al valore di questo flag. In pratica abilita il set completo delle istruzioni del kernel. 
 
 \subsubsection{Chiamate di Sistema}
+\label{sec:sys-call}
 
 Si utilizzano le chiamate di sistema, interfaccia sicura e standardizzata per permettere ai processi di accedere a risorse di sistema o servizi critici. Permettono di 
 eseguire operazioni come accedere al filesystem, creare o distruggere processi, comunicare con altri processi o allocare memoria. Per eseguire una chiamata di sistema 
