@@ -153,13 +153,13 @@ prompt> docker container exec -it os2425 /bin/bash
 
 \clearpage
 
-\section{Introduzione alla Linea di Comando}
+\section{Introduzione alla Riga di Comando}
 
 All'apertura del container docker ci si trova davanti ad una riga di comando del tipo:
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$    
 \end{minted}
-
+%$ 
 Il termina prima della chiocciola indica l'utente con cui si è effettuato l'accesso. La maggior parte dei sistemi operativi moderni infatti sono sviluppati su di una base multiutente. Per cui lo stesso sistema può 
 essere utilizzato da utenti diversi, anche contemporaneamente con una separazione di privilegi, isolando i file appartenenti ai vari profili degli utenti. Si utilizza quindi l'utente \verb|corso|. Mentre il nome 
 dell'host è \verb|sistemi-operativi|, specificato dopo la chiocciola. Un'ulteriore separatore \verb|:| lo separa dai caratteri \verb|~$|. Il primo rappresenta un percorso, descritto successivamente, indica 
@@ -167,6 +167,9 @@ la directory corrente, in questo caso \verb|~| indica la cartella di base dell'u
 di comando. Al posto di questo carattere può essere presente un cancelletto \verb|#|, nel caso di livello di privilegio di amministratore. 
 
 Quando viene effettuato un comando, viene restituito un output a schermo, ed alla riga successiva, viene riproposto il prompt dei comandi. Non necessariamente tutti i comandi producono un output visivo a schermo. 
+
+La maggior parte dei comandi disponibili su Linux dispongono di un'opzione standard che fornisce una piccola guida d'uso per il comando, indicata da \verb|--help|. 
+Se un comando necessita di un argomento, e non viene fornito, attende un input dallo stdin. Questa possibilità è abbastanza utilizzata e comoda nell'esecuzione di comandi ``in pipe''. 
 
 \subsection{Comandi su Directory}
 
@@ -205,10 +208,10 @@ Esistono essenzialmente due tipi di percorsi, relativi ed assoluti. Si distinguo
 partendo dalla radice del filesystem, come \verb|/home/corso|. I percorsi che non iniziano con \verb|/| sono percorsi relativi, come \verb|corso|, all'interno di \verb|/home|. 
 
 Se si utilizza un percorso assoluto, l'interprete dei comandi ci porta esattamente all'interno di quel percorso, altrimenti l'interprete dei comandi concatena la working directory con il comando relativo inserito, 
-generando il percorso da seguire. Non c'è alcuna differenza nel funzionamento di questi due comandi, poiché viene gestito trasparentemente dal sistema operativo. 
+generando il percorso da seguire. Non c'è alcuna differenza nel funzionamento di questi due comandi, poiché viene gestito in modo trasparente dal sistema operativo. 
 
 Ogni directory contiene sempre due directory speciali: \verb|.| e \verb|..|, dove \verb|.| indica la directory corrente. Per cui \verb|/home/corso/.| è uguale a \verb|/home/corso|. Sarà molto utile in comandi 
-successivi. La directory \verb|..| rappresenta la directory esattamete superiore nel filesystem. Per cui \verb|/home/corso/..| è uguale a \verb|/home|. 
+successivi. La directory \verb|..| rappresenta la directory esattamente superiore nel filesystem. Per cui \verb|/home/corso/..| è uguale a \verb|/home|. 
 Quest'ultima directory ci permette di risalire l'albero del filesystem gradualmente. Viene utilizzata per semplificare il movimento all'interno del filesystem, senza necessariamente conoscere tutti i percorsi 
 possibili alle directory superiori. Anche la radice contiene queste due cartelle, quindi sembrerebbe possibile salire al livello superiore della radice, ma il comando \verb|cd ..| riporta alla radice. 
 
@@ -348,6 +351,19 @@ in modo più grezzo, con meno funzionalità.
 Per ritornare alla riga di comando bisogna digitare il tasto \verb|Q|. Questo programma offre un suo prompt, all'ultima riga dell'interfaccia grafica indicato da \verb|:|, dove possono essere eseguite 
 operazione sul file aperto. 
 
+Invece di utilizzare il comando \verb|less|, per individuare caratteristiche di un file testuale molto lungo, si può usare il comando \verb|wc|, che dispone di varie opzioni diverse, \verb|-l| viene utilizzata 
+per contare il numero di righe del testo, \verb|-c| per il numero di caratteri e \verb|-w| per il numero di parole, separate da spazi. Queste sono i tre parametri di default del comando senza opzioni aggiuntive, 
+ma sono presenti opzioni aggiuntive per diversi parametri. Il comando prende come argomento il percorso del file e ne restituisce i parametri richiesti. 
+
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ wc output.txt
+ 7 7 40 output.txt
+corso@sistemi-operativi:~$
+\end{minted}
+
+Il comando \verb|uniq| permette di contare il numero di righe uniche all'interno di un file. Per permettere il funzionamento di questo comando, le righe identiche devono essere adiacenti, quindi il file deve essere 
+ordinato. Si può ordinare un file testuale alfabeticamente tramite il comando \verb|sort|, seguito dal percorso del file. 
+
 \subsection{Spostamento e Copia di Elementi}
 
 Per spostare dei file si utilizza il comando ``Move'' \verb|mv| seguito da una serie di argomenti, dove l'ultimo rappresenta il percorso dove vengono spostati i file o directory indicate nei precedenti argomenti:
@@ -454,185 +470,52 @@ Allora per rimuovere questa cartella, si potrebbero rimuovere manualmente tutti 
 rimuovendo tutti gli elementi contenuti all'interno del percorso specificato, prima di rimuovere gli elementi superiori. Quest'opzione di \verb|rm| scende fino alle foglie, dato il percorso specificato, e le rimuovere, 
 risalendo nell'albero fino a quando non è in grado di rimuovere tutto il percorso passato come argomento. 
 
-
-%% TODO aggiungere lezioni 30 set; 1 ott
-
-\subsection{Scrittura di File e Chiamate di Sistema}
-
-Si può utilizzare un editor di testo nativo alla command line, accessibile tramite il comando \verb|nano|, per poter creare file C. 
+Quest'opzione da passare al comando è \verb|-r|, per indicare di effettuare il comando ricorsivamente sul percorso specificato. Questi tipi di opzioni sono estremamente utili nel cambiare il comportamento dei 
+comandi per effettuar precise operazioni, e ne esistono di svariate per tutti i comandi disponibili sul prompt. Si possono abbinare contemporaneamente più di un'opzione, e invece di inserirle singolarmente dopo ogni 
+\verb|-| si possono unire in una singola opzione. Si considera l'esempio della rimozione ricorsiva, su cui vuole essere associata anche l'opzione \verb|-v|, che abilita un livello di verbosità maggiore sulla 
+sua esecuzione:
 \begin{minted}{powershell}
-corso@sistemi-operativi:~$ nano hello.c
-\end{minted}
-%$ 
-All'interno dell'editor, in basso sono presenti gli shortcut disponibili, per salvare un file si utilizza il comando ``Ctrl+O'', ed in seguito si inserisce il nome 
-del file e si conferma con invio. Per uscire dall'editor si utilizza il comando ``Ctrl+X''. 
-
-Si crea questo file dove è presente una singola istruzione di stampa della stringa \verb|Hello World|:
-\begin{minted}{c}
-#include <stdio.h>
-
-int main(){
-    printf("Hello World\n");
-}
-\end{minted}
-
-Sono compilabili con la stessa sintassi dei precedenti codici, tramite l'interprete gcc:
-\begin{minted}{powershell}
-corso@sistemi-operativi:~$ gcc -o hello hello.c
-corso@sistemi-operativi:~$ ./hello
-Hello World
+corso@sistemi-operativi:~$ rm -rv dir2
+removed: 'output.txt'
+removed directory: 'dir2/dir3'
+removed directory: 'dir2'
 corso@sistemi-operativi:~$
 \end{minted}
-%$ 
 
-Invece di scrivere direttamente il codice sul container, è possibile trasferire un file scritto sulla macchina host, con il comando \verb|cp| 
-seguito dal nome del file da copiare sul container. Bisogna anche specificare dove bisogna salvare il file, si indica il nome del container e dopo i due punti il percorso 
-assoluto al suo interno:
-\begin{minted}{powershell}
-prompt> docker cp hello.c os2425:/home/corso 
-\end{minted}
+L'opzione \verb|-v| è comune a molti comandi, ma bisogna verificare per ogni sistema se si tratta dell'opzione richiesta. 
+Per operazioni di rimozione, nei sistemi operativi moderni esiste un oggetto comunemente chiamato ``Cestino'', dove vengono spostati gli elementi assegnati come rimossi, per evitare di eliminare accidentalmente
+file importanti per errore. L'operazione di rimozione non arriva fino al livello hardware dove vengono modificati direttamente i suoi valori contenuti, ma viene effettuata un'operazione di ``unlink'', in modo che 
+il filesystem li ritenga liberi. Vengono considerati liberi, anche se occupati da dati concreti, poiché questi dati sono stati rimossi dal sistema, e quindi il filesystem non ne deve più tenere traccia, si rimuovere 
+il loro riferimento. 
+Questo tipo di rimozione è quindi molto più veloce che una scrittura sull'intera zona di memoria dove erano salvati gli elementi. A volte è possibile recuperare file andati cancellati, poiché questi sono stati 
+cancellati solamente tramite un unlink. E se quella zona nel disco non è stata sovrascritta allora è possibile risalire ai dati cancellati, ma non è possibile determinare quando quella zona sul disco venga 
+utilizzata. 
 
+Anche il comando \verb|rm| può prendere come argomenti una sequenza, di percorsi da dover eliminare. Con i privilegi di utente, è possibile cancellare file solamente nella home directory dell'utente. 
 
-Dentro la directory \verb|/ostep-code/| sono presenti molti codici con esempi di \ref{sec:sys-call}, analizzate in questo corso. 
+\subsection{Espressioni Regolari}
 
-Il comando \verb|man| fornisce le pagine di manuali relativi alla chiamata di sistema o comando forniti come argomenti. Ognuna di queste pagina di manuale contiene una 
-sezione che specifica i possibili valori di ritorno di questa chiamata di sistema. Questo manuale è disponibile in ogni sistema Linux, e rappresenta una delle 
-funzioni più utili disponibili in un sistema operativo, poiché fornisce tutte le informazioni necessarie per utilizzare le chiamate di sistema nella programmazione. 
+Generalmente si vuole trovare il modo più efficiente e semplice per scrivere comandi sul prompt, abbreviando i comandi utilizzando caratteri speciali ed espressioni regolari.
+I caratteri speciali \verb|*| e \verb|?| vengono utilizzati per ridurre la quantità di testo da scrivere per un singolo comando. Se si aggiunge il carattere \verb|*| alla fine di una stringa, questo corrisponde 
+a tutte le stringhe che hanno la stringa indicata come prefisso. Inversamente se viene una stringa viene posta dopo l'asterisco, questo corrisponde a tutte le stringhe che hanno la stringa indicata come 
+suffisso. Se una stringa viene incapsulata da due asterischi, corrisponde a tutte le stringhe che contengono al loro interno la stringa utilizzata. 
 
-La maggior parte delle pagine relative a chiamate di sistema sono divise in sezioni. Una prima sezione fornisce una descrizione sintetica del suo funzionamento, 
-e viene descritta la sua sintassi, e le librerie necessarie per essere utilizzate. Molte di queste chiamate di sistema restituiscono un valore di tipo \verb|pid_t|, 
-essenzialmente un intero, ma fornisce informazioni aggiuntive quando viene riferito a dei processi. Segue una descrizione estesa della chiamata. 
-Ognuna di queste pagine contiene una sezione per i valori i ritorno, molto utili per interpretare il comportamento della funzione. 
-Per scorrere tra le varie pagine del manuale di una funzione si utilizza il tasto \verb|F|, mentre per chiudere il manuale si utilizza il tasto \verb|Q|. 
+Il carattere speciale \verb|?| appartiene alla stessa famiglia, ma mentre \verb|*| corrisponde ad una sequenza qualunque di caratteri, \verb|?| corrisponde ad un singolo carattere. Può essere posizionato 
+analogamente al carattere \verb|*|. Entrambi i caratteri possono apparire in posizioni arbitrarie di una stringa. 
 
-Poiché è un elemento molto complesso, esiste una pagina di manuale dedicata ad esso stesso, che spiega come è diviso ed in quale capitoli trovare quello che si sta 
-cercando. Questa suddivisione permette di risolvere omonimie. Per accedere alle pagine di manuale dedicate ad una di queste funzioni omonime, se non si vuole accedere 
-alla prima, si inserisce prima del nome della chiamata di sistema. 
+Se in una directory sono presenti file aventi una parte del nome uguale, è possibile utilizzare questi caratteri speciali per effettuare un comando su tutti questi elementi, senza doverli specificare tutti. A 
+volte infatti è necessario operare su un numero molto elevato di elementi, con minime variazioni nei loro nomi, per cui sarebbe molto poco efficiente scrivere singolarmente tutti i loro nomi in un comando. 
+Inoltre aumenta la comprensione del comando in modo da poter individuare con immediatezza gli elementi di considerati. 
 
-Alcune di queste chiamate di sistema, non sono vere e proprie chiamate di sistema, ma rappresentano delle versioni ``wrapped'' di vere chiamate di sistema. 
+\subsection{Comandi in Pipe}
+%$
 
-Per spostare la cartella di interessa si utilizza la flag \verb|-r| sul comando \verb|cp| che copia ricorsivamente una cartella:
-\begin{minted}{powershell}
-corso@sistemi-operativi:~$ cd /ostep-code/
-corso@sistemi-operativi:/ostep-code$ cp -r cpu-api/ /home/corso 
-corso@sistemi-operativi:~$
-\end{minted}
-%$ 
-
-Nel file \verb|p1.c| sono presenti delle semplici chiamate di sistema:
-\begin{minted}{c}
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-int main(int argc, char *argv[]) {
-    printf("hello world (pid:%d)\n", (int) getpid());
-    int rc = fork();
-    if (rc < 0) { // fork failed; exit
-        fprintf(stderr, "fork failed\n");
-        exit(1);
-    } else if (rc == 0) { // child (new process)
-        printf("hello, I am child (pid:%d)\n", (int) getpid());
-    } else { // parent goes down this path (original process)
-        printf("hello, I am parent of %d (pid:%d)\n", rc, (int) getpid());
-    }
-    return 0;
-}
-\end{minted}
-
-
-La funzione \verb|getpid()| restituisce il ``Process ID'', pid, del processo che l'ha invocato. 
-La funzione \verb|fork()| crea un'altra istanza dello stesso processo, duplicando la memoria, un uno spazio separato, ma ha lo stesso 
-contenuto, tranne per il valore di ritorno di questa funzione. Per il processo padre è il pid del padre, mentre per il figlio è esattamente 0. Per entrambi i processi 
-la prima istruzione da eseguire è la prima istruzione seguente al fork. 
-
-Questo programma stampa il pid di questi due processi, verificando con un'istruzione condizionale il loro valore di ritorno. 
-Non rappresenta un'esecuzione tramite threads, poiché non avviene sullo stesso spazio di memoria, e non sono presenti variabili condivise, che potrebbero generare 
-conflitti, analizzati successivamente. Poiché questi processi vengono eseguiti su spazi di memoria isolati tra di loro, non per scambiarsi dati tra di loro devono 
-utilizzare ulteriori chiamate di sistema come per generare collegamenti come ``pipe'' o ``socket''. 
-
-Quando viene eseguito questo file \verb|p1.c| non è garantito che venga sempre eseguito prima il processo padre e poi il processo figlio. Non è possibile 
-conoscere a priori in termini generali come lo scheduler decide di gestire il processo padre ed il processo figlio. Nella vita reale potrebbe essere richiesto sincronizzare 
-due processi, quindi bisognerebbe poter controllare il quando vengono eseguiti rispetto agli altri. Per risolvere questo problema ed inserire un 
-ordine certo e noto a priori a questo output, si utilizza la funzione \verb|wait()| per introdurre un meccanismo di attesa. 
-
-
-Nel file p2.c è contenuta la chiamata di sistema \verb|wait()|, la funzione attende il cambiamento di stato di un processo, non solo la sua terminazione: 
-\begin{minted}{c}
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <unistd.h>
-    
-    int main(int argc, char *argv[]) {
-        printf("hello world (pid:%d)\n", (int) getpid());
-        int rc = fork();
-        if (rc < 0) { // fork failed; exit
-            fprintf(stderr, "fork failed\n");
-            exit(1);
-        } else if (rc == 0) { // child (new process)
-            printf("hello, I am child (pid:%d)\n", (int) getpid());
-            sleep(1)
-        } else { // parent goes down this path (original process)
-            int wc = wait(NULL)
-            printf("hello, I am parent of %d (wc: %d) (pid:%d)\n", 
-                    rc, wc, (int) getpid());
-        }
-        return 0;
-    }
-\end{minted}
-Questa funzione prendo come argomento un puntatore ad intero di tipo \verb|Nullable|, quindi si può utilizzare il puntatore 
-\verb|null|, se non si vuole catturare il valore di ritorno. Esistono tre varianti della funzione \verb|wait()|, \verb|waitpid()| e \verb|waitid()|. 
-Il valore restituito dalla funzione è di tipo \verb|pid_t|, o \verb|int|, solo per \verb|waitid()|, in caso di terminazione rappresenta l'id del processo terminato, 
-oppure -1 se la funzione ha riscontrato errori o ha fallito. 
-La prima funzione attende il cambiamento di un qualsiasi processo, la seconda attende il cambiamento di un processo specifico. 
-
-Queste funzioni vengono utilizzate per osservare il cambiamento di stato dei figli nel processo chiamante. Un cambiamento di stato sono la terminazione, l'aver 
-ricevuto un ricevuto un segnale ed avere interrotto l'esecuzione o continuato l'esecuzione. Quando un figlio viene terminato, tramite una wait è possibile liberare 
-le risorse associate al processo figlio.  
-La differenza rispetto all'esecuzione di \verb|p1.c| è che il processo padre non può stampare la sua riga di testo se non è stato eseguito il processo figlio, tramite 
-una funzione \verb|wait()|. 
-
-
-
-Per scrivere all'interno di un file, da creare o già esistere, si utilizzano tre chiamate di sistema, la \verb|open()| per aprire il file e permettere di 
-modificarlo, la \verb|write()| per scrivere all'interno del file, e si utilizza la \verb|close()| per chiudere il file aperto. Dalle pagine di manuale si osserva 
-che la funzione \verb|open()| necessita della librerie \verb|fcntl.h| e richiede come argomento una stringa che contiene il percorso al file che si vuole aprire, o 
-creare. Si può specificare inoltre il suo comportamento, e bisogna specificare la modalità del file, ovvero i suoi permessi, in caso si decida di crearlo. Si può 
-concatenare la scrittura, troncare il file, oppure crearne uno nuovo, in base alle flag specificate nella \verb|open()|. 
-Queste flag possono essere concatenate insieme, tramite l'operatore \verb|||. Si utilizzano le seguenti flag per indicare di troncare il file in caso esista, altrimenti 
-di crearlo e di assegnare privilegi di lettura e scrittura al possessore dello stesso. Inoltre si specifica la modalità di accesso: in solo lettura, solo scrittura, oppure 
-lettura e scrittura. In questo caso si apre in modalità di sola scrittura:
-\begin{minted}{c}
-    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
-\end{minted}
-
-Quando un file viene aperto in un sistema Linux, il sistema operativo mette a disposizione un riferimento al file, un ``File Descriptor'', contenuto in un intero. 
-Nelle seguenti operazioni si userà il FD, invece del percorso del file, per accedere al file aperto. Se non viene specificato il percorso del file, viene creato 
-nella working directory. 
-
-Per effettivamente scrivere dentro al file si utilizza la funzione \verb|write()|, che prende come argomento il FD, un buffer da cui prende cosa scrivere, ed un 
-intero che specifica fino a quando deve continuare a scrivere byte per byte. Questa funzione richiede dell'ulteriore librerie \verb|unistd.h|:
-\begin{minted}{c}
-    char* txt = "test";
-    write(fd, txt, strlen(txt));
-\end{minted}
-
-Dopo aver effettuato queste modifiche si può chiudere il file tramite la \verb|close()|, dato il FD. Si ha quindi un file completo del tipo:
-\begin{minted}{c}
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-int main(){
-    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
-
-    char* txt = "test";
-    write(fd, txt, strlen(txt));
-
-    close(fd);
-}
-\end{minted}
+Quando un comando viene invocato, i suoi argomenti provengono dallo stdin, ed è possibile che il programma scriva su due flussi di dati, stdout e stderr. Si vedono entrambi indipendentemente a schermo, per cui 
+non è possibile distinguerli. Questa suddivisione è comoda per isolare cosa viene scritto su entrambe le parti. L'operatore di redirezione agisce esclusivamente sullo stdout. Esiste un altro operatore di 
+redirezione che agisce sullo stderr. Di default ha lo stesso comportamento dello stdout, il suo contenuto viene mostrato a schermo. Si possono separare con due operatori di redirezione per impedire che 
+convergano. 
+Si vorrebbe inviare il risultato di un comando all'input di un altro programma. I comandi in Linux sono strutturati con la possibilità di non inserire l'argomento per poter realizzare catene di comandi in pipe, 
+dove il risultato di uno viene inserito nello stdout e rappresenta l'input di un altro. Questo viene effettuato tramite l'operatore di pipe \verb|||. 
 
 
 \clearpage
@@ -1230,5 +1113,186 @@ rimozione di un nodo. Vengono mantenuti solo i processi di stato running o ready
 individuare in tempo efficiente il processo con il vruntime minore. 
 Se un processo vuole effettuare un'operazione di I/O, il suo vruntime rimane costante mentre il valore degli altri processi in esecuzione aumenta. %% TODO in caso di I/O
 
+\clearpage
+
+\section{Programmare con Chiamate di Sistema}
+
+Si può utilizzare un editor di testo nativo alla command line Linux, accessibile tramite il comando \verb|nano|, per poter visualizzare e modificare file in C. 
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ nano hello.c
+\end{minted}
+%$ 
+All'interno dell'editor, in basso sono presenti gli shortcut disponibili, per salvare un file si utilizza il comando ``Ctrl+O'', ed in seguito si inserisce il nome 
+del file e si conferma con invio. Per uscire dall'editor si utilizza il comando ``Ctrl+X''. 
+
+Si crea questo file dove è presente una singola istruzione di stampa della stringa \verb|Hello World|:
+\begin{minted}{c}
+#include <stdio.h>
+
+int main(){
+    printf("Hello World\n");
+}
+\end{minted}
+
+Sono compilabili con la stessa sintassi dei precedenti codici, tramite l'interprete gcc:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ gcc -o hello hello.c
+corso@sistemi-operativi:~$ ./hello
+Hello World
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+
+Invece di scrivere direttamente il codice sul container, è possibile trasferire un file scritto sulla macchina host, con il comando \verb|cp| 
+seguito dal nome del file da copiare sul container. Bisogna anche specificare dove bisogna salvare il file, si indica il nome del container e dopo i due punti il percorso 
+assoluto al suo interno:
+\begin{minted}{powershell}
+prompt> docker cp hello.c os2425:/home/corso 
+\end{minted}
+
+
+Dentro la directory \verb|/ostep-code/| sono presenti molti codici con esempi di \ref{sec:sys-call}, analizzate in questo corso. 
+
+Il comando \verb|man| fornisce le pagine di manuali relativi alla chiamata di sistema o comando forniti come argomenti. Ognuna di queste pagina di manuale contiene una 
+sezione che specifica i possibili valori di ritorno di questa chiamata di sistema. Questo manuale è disponibile in ogni sistema Linux, e rappresenta una delle 
+funzioni più utili disponibili in un sistema operativo, poiché fornisce tutte le informazioni necessarie per utilizzare le chiamate di sistema nella programmazione. 
+
+La maggior parte delle pagine relative a chiamate di sistema sono divise in sezioni. Una prima sezione fornisce una descrizione sintetica del suo funzionamento, 
+e viene descritta la sua sintassi, e le librerie necessarie per essere utilizzate. Molte di queste chiamate di sistema restituiscono un valore di tipo \verb|pid_t|, 
+essenzialmente un intero, ma fornisce informazioni aggiuntive quando viene riferito a dei processi. Segue una descrizione estesa della chiamata. 
+Ognuna di queste pagine contiene una sezione per i valori i ritorno, molto utili per interpretare il comportamento della funzione. 
+Per scorrere tra le varie pagine del manuale di una funzione si utilizza il tasto \verb|F|, mentre per chiudere il manuale si utilizza il tasto \verb|Q|. 
+
+Poiché è un elemento molto complesso, esiste una pagina di manuale dedicata ad esso stesso, che spiega come è diviso ed in quale capitoli trovare quello che si sta 
+cercando. Questa suddivisione permette di risolvere omonimie. Per accedere alle pagine di manuale dedicate ad una di queste funzioni omonime, se non si vuole accedere 
+alla prima, si inserisce prima del nome della chiamata di sistema. 
+
+Alcune di queste chiamate di sistema, non sono vere e proprie chiamate di sistema, ma rappresentano delle versioni ``wrapped'' di vere chiamate di sistema. 
+
+Per spostare la cartella di interessa si utilizza la flag \verb|-r| sul comando \verb|cp| che copia ricorsivamente una cartella:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ cd /ostep-code/
+corso@sistemi-operativi:/ostep-code$ cp -r cpu-api/ /home/corso 
+corso@sistemi-operativi:~$
+\end{minted}
+%$ 
+
+Nel file \verb|p1.c| sono presenti delle semplici chiamate di sistema:
+\begin{minted}{c}
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char *argv[]) {
+    printf("hello world (pid:%d)\n", (int) getpid());
+    int rc = fork();
+    if (rc < 0) { // fork failed; exit
+        fprintf(stderr, "fork failed\n");
+        exit(1);
+    } else if (rc == 0) { // child (new process)
+        printf("hello, I am child (pid:%d)\n", (int) getpid());
+    } else { // parent goes down this path (original process)
+        printf("hello, I am parent of %d (pid:%d)\n", rc, (int) getpid());
+    }
+    return 0;
+}
+\end{minted}
+
+
+La funzione \verb|getpid()| restituisce il ``Process ID'', pid, del processo che l'ha invocato. 
+La funzione \verb|fork()| crea un'altra istanza dello stesso processo, duplicando la memoria, un uno spazio separato, ma ha lo stesso 
+contenuto, tranne per il valore di ritorno di questa funzione. Per il processo padre è il pid del padre, mentre per il figlio è esattamente 0. Per entrambi i processi 
+la prima istruzione da eseguire è la prima istruzione seguente al fork. 
+
+Questo programma stampa il pid di questi due processi, verificando con un'istruzione condizionale il loro valore di ritorno. 
+Non rappresenta un'esecuzione tramite threads, poiché non avviene sullo stesso spazio di memoria, e non sono presenti variabili condivise, che potrebbero generare 
+conflitti, analizzati successivamente. Poiché questi processi vengono eseguiti su spazi di memoria isolati tra di loro, non per scambiarsi dati tra di loro devono 
+utilizzare ulteriori chiamate di sistema come per generare collegamenti come ``pipe'' o ``socket''. 
+
+Quando viene eseguito questo file \verb|p1.c| non è garantito che venga sempre eseguito prima il processo padre e poi il processo figlio. Non è possibile 
+conoscere a priori in termini generali come lo scheduler decide di gestire il processo padre ed il processo figlio. Nella vita reale potrebbe essere richiesto sincronizzare 
+due processi, quindi bisognerebbe poter controllare il quando vengono eseguiti rispetto agli altri. Per risolvere questo problema ed inserire un 
+ordine certo e noto a priori a questo output, si utilizza la funzione \verb|wait()| per introdurre un meccanismo di attesa. 
+
+
+Nel file p2.c è contenuta la chiamata di sistema \verb|wait()|, la funzione attende il cambiamento di stato di un processo, non solo la sua terminazione: 
+\begin{minted}{c}
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <unistd.h>
+    
+    int main(int argc, char *argv[]) {
+        printf("hello world (pid:%d)\n", (int) getpid());
+        int rc = fork();
+        if (rc < 0) { // fork failed; exit
+            fprintf(stderr, "fork failed\n");
+            exit(1);
+        } else if (rc == 0) { // child (new process)
+            printf("hello, I am child (pid:%d)\n", (int) getpid());
+            sleep(1)
+        } else { // parent goes down this path (original process)
+            int wc = wait(NULL)
+            printf("hello, I am parent of %d (wc: %d) (pid:%d)\n", 
+                    rc, wc, (int) getpid());
+        }
+        return 0;
+    }
+\end{minted}
+Questa funzione prendo come argomento un puntatore ad intero di tipo \verb|Nullable|, quindi si può utilizzare il puntatore 
+\verb|null|, se non si vuole catturare il valore di ritorno. Esistono tre varianti della funzione \verb|wait()|, \verb|waitpid()| e \verb|waitid()|. 
+Il valore restituito dalla funzione è di tipo \verb|pid_t|, o \verb|int|, solo per \verb|waitid()|, in caso di terminazione rappresenta l'id del processo terminato, 
+oppure -1 se la funzione ha riscontrato errori o ha fallito. 
+La prima funzione attende il cambiamento di un qualsiasi processo, la seconda attende il cambiamento di un processo specifico. 
+
+Queste funzioni vengono utilizzate per osservare il cambiamento di stato dei figli nel processo chiamante. Un cambiamento di stato sono la terminazione, l'aver 
+ricevuto un ricevuto un segnale ed avere interrotto l'esecuzione o continuato l'esecuzione. Quando un figlio viene terminato, tramite una wait è possibile liberare 
+le risorse associate al processo figlio.  
+La differenza rispetto all'esecuzione di \verb|p1.c| è che il processo padre non può stampare la sua riga di testo se non è stato eseguito il processo figlio, tramite 
+una funzione \verb|wait()|. 
+
+
+
+Per scrivere all'interno di un file, da creare o già esistere, si utilizzano tre chiamate di sistema, la \verb|open()| per aprire il file e permettere di 
+modificarlo, la \verb|write()| per scrivere all'interno del file, e si utilizza la \verb|close()| per chiudere il file aperto. Dalle pagine di manuale si osserva 
+che la funzione \verb|open()| necessita della librerie \verb|fcntl.h| e richiede come argomento una stringa che contiene il percorso al file che si vuole aprire, o 
+creare. Si può specificare inoltre il suo comportamento, e bisogna specificare la modalità del file, ovvero i suoi permessi, in caso si decida di crearlo. Si può 
+concatenare la scrittura, troncare il file, oppure crearne uno nuovo, in base alle flag specificate nella \verb|open()|. 
+Queste flag possono essere concatenate insieme, tramite l'operatore \verb|||. Si utilizzano le seguenti flag per indicare di troncare il file in caso esista, altrimenti 
+di crearlo e di assegnare privilegi di lettura e scrittura al possessore dello stesso. Inoltre si specifica la modalità di accesso: in solo lettura, solo scrittura, oppure 
+lettura e scrittura. In questo caso si apre in modalità di sola scrittura:
+\begin{minted}{c}
+    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
+\end{minted}
+
+Quando un file viene aperto in un sistema Linux, il sistema operativo mette a disposizione un riferimento al file, un ``File Descriptor'', contenuto in un intero. 
+Nelle seguenti operazioni si userà il FD, invece del percorso del file, per accedere al file aperto. Se non viene specificato il percorso del file, viene creato 
+nella working directory. 
+
+Per effettivamente scrivere dentro al file si utilizza la funzione \verb|write()|, che prende come argomento il FD, un buffer da cui prende cosa scrivere, ed un 
+intero che specifica fino a quando deve continuare a scrivere byte per byte. Questa funzione richiede dell'ulteriore librerie \verb|unistd.h|:
+\begin{minted}{c}
+    char* txt = "test";
+    write(fd, txt, strlen(txt));
+\end{minted}
+
+Dopo aver effettuato queste modifiche si può chiudere il file tramite la \verb|close()|, dato il FD. Si ha quindi un file completo del tipo:
+\begin{minted}{c}
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(){
+    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
+
+    char* txt = "test";
+    write(fd, txt, strlen(txt));
+
+    close(fd);
+}
+\end{minted}
+
+
+\clearpage
 
 \end{document}
