@@ -1257,9 +1257,10 @@ modificarlo, la \verb|write()| per scrivere all'interno del file, e si utilizza 
 che la funzione \verb|open()| necessita della librerie \verb|fcntl.h| e richiede come argomento una stringa che contiene il percorso al file che si vuole aprire, o 
 creare. Si può specificare inoltre il suo comportamento, e bisogna specificare la modalità del file, ovvero i suoi permessi, in caso si decida di crearlo. Si può 
 concatenare la scrittura, troncare il file, oppure crearne uno nuovo, in base alle flag specificate nella \verb|open()|. 
-Queste flag possono essere concatenate insieme, tramite l'operatore \verb|||. Si utilizzano le seguenti flag per indicare di troncare il file in caso esista, altrimenti 
-di crearlo e di assegnare privilegi di lettura e scrittura al possessore dello stesso. Inoltre si specifica la modalità di accesso: in solo lettura, solo scrittura, oppure 
-lettura e scrittura. In questo caso si apre in modalità di sola scrittura:
+Queste flag possono essere concatenate insieme, tramite l'operatore \verb|||. Si utilizzano le seguenti flag per indicare di troncare il file in caso esista \verb|O_TRUNC|, 
+ovvero eliminare il suo contenuto, altrimenti 
+di crearlo \verb|O_CREAT| e di assegnare privilegi di lettura e scrittura al possessore dello stesso \verb|S_IRWXU|. Inoltre si specifica la modalità di accesso: in solo lettura, solo scrittura, oppure 
+lettura e scrittura \verb|O_WRONLY|. In questo caso si apre in modalità di sola scrittura:
 \begin{minted}{c}
     int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
 \end{minted}
@@ -1272,8 +1273,17 @@ Per effettivamente scrivere dentro al file si utilizza la funzione \verb|write()
 intero che specifica fino a quando deve continuare a scrivere byte per byte. Questa funzione richiede dell'ulteriore librerie \verb|unistd.h|:
 \begin{minted}{c}
     char* txt = "test";
-    write(fd, txt, strlen(txt));
+    int bytes = write(fd, txt, strlen(txt));
 \end{minted}
+
+La funzione \verb|write()| ha un suo valore di ritorno, restituisce il numero di byte che sono stati scritti dalla chiamata stessa. Ci si aspetta coincida al numero 
+di byte dell'argomento della funzione. Nella maggior parte dei casi questo è vero, ma per una scrittura molto lunga, probabilmente la funzione non riuscirà a completare 
+con una sola chiamata la scrittura totale, e quindi il valore di ritorno sarà minore. 
+Si può inserire in un ciclo, per permettere di partire ad una distanza di offset pari a quanto è stato scritto per riuscire a scrivere tutto con più invocazioni alla 
+funzione di scrittura. 
+Questo potrebbe avvenire quando una chiamata di sistema del kernel viene interrotta durante la sua esecuzione. 
+
+Questo processo può avvenire anche con la chiamata \verb|read()|, quando deve leggere un numero elevato di dati da disco.  
 
 Dopo aver effettuato queste modifiche si può chiudere il file tramite la \verb|close()|, dato il FD. Si ha quindi un file completo del tipo:
 \begin{minted}{c}
@@ -1284,15 +1294,138 @@ Dopo aver effettuato queste modifiche si può chiudere il file tramite la \verb|
 
 int main(){
     int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
-
     char* txt = "test";
-    write(fd, txt, strlen(txt));
-
+    int bytes = write(fd, txt, strlen(txt));
     close(fd);
 }
 \end{minted}
 
+Se si utilizza invece di un dato che non sia una stringa, e ne viene passato il riferimento alla funzione \verb|write()|, questa interpreta i byte indirizzati come 
+caratteri e li scrive. Mentre non è possibile leggere questo file, poiché i byte non corrispondono ad alcuni caratteri:
+\begin{minted}{c}
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(){
+    int fd = open("test.txt", O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU);
+    int buffer = 4;
+    int bytes = write(fd, &buffer, sizeof(int));
+    close(fd);
+}
+\end{minted}
+
+I byte salvati, se letti tramite \verb|less| o \verb|nano| corrispondono a \verb|^D^@^@^@|, non permettono di essere letti come caratteri utilizzando comandi su riga, ma 
+è possibile tramite il comando \verb|read()| interpretarli come un intero e quindi leggere l'informazione loro contenuta:
+\begin{minted}{c}
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(){
+    int fd = open("test.txt", O_RDONLY, S_IRWXU);
+    int buffer = 0;
+    buffer = read(fd, &buffer, sizeof(int));
+    printf("%d\n", buffer);
+    close(fd);
+}
+\end{minted}
+
+La lettura deve sapere la lunghezza di quello che legge, altrimenti andrebbe oltre i limiti consentiti a quella chiamata, causando un ``segmentation fault''. 
+
+La funzione \verb|exec()| permette di eseguire altre applicazioni presenti nel sistema, chiamando l'eseguibile. In pratica l'applicazione attuale viene sostituita in 
+memoria dall'applicazione chiamata tramite \verb|exec()|. Altre variazioni di questa chiamata permettono di utilizzare sintassi diverse, che permettono di effettuare 
+una fork per eseguire entrambe le applicazioni, o di iniettare una funzione sulla riga di comando. 
+
+Si considera il seguente codice:
+
+\begin{minted}{c}
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+
+int main(){
+    int fd = open("test.txt", O_RDONLY, S_IRWXU);
+    int buffer = 0;
+    buffer = read(fd, &buffer, sizeof(int));
+    printf("%d\n", buffer);
+    close(fd);
+
+    char* myarg[2];
+    myarg[0] = strdup("ls");
+    myarg[1] = NULL;
+    execvp(myarg[0], myarg);
+    printf("test\n");
+}
+\end{minted}
+
+La funzione \verb|strdup| alloca una certa area di memoria per salvare il suo argomento, e ne restituisce l'indirizzo. Il comando \verb|execvp()| permette di eseguire 
+sulla linea di comando un comando esterno sulla riga di comando. Ma l'istruzione successiva in questo programma non viene eseguita perché viene sostituita dalla 
+chiamata \verb|ls|. Se la \verb|exec| fallisce, il controllo passa alla prossima istruzione nel programma iniziale. 
 
 \clearpage
+
+\section{Virtualizzazione della Memoria}
+
+Ogni processo in esecuzione non tiene conto di nessun altro processo in esecuzione, non è in grado di sapere che altri processi sono in esecuzione. 
+La virtualizzazione della memoria garantisce l'isolamento dei processi in esecuzione, in modo che non possono accedere in lettura o scrittura alla memoria di altri 
+processi. Per motivi di sicurezza e di affidabilità del sistema. Un astrazione della memoria sullo stesso modello dell'astrazione della CPU porta a dei benefici. 
+
+
+Nei primi sistemi operativi ogni processo che veniva eseguito era l'unico programma attivo per volta, per un piccolo intervallo di tempo, a cui era disponibili tutta 
+la memoria non occupata dal sistema operativo. In questo modo l'utilizzo della memoria era molto efficiente. Nei sistemi moderni più di un processo vengono eseguiti 
+in contemporanea, in spazi di memoria diversi. La memoria viene quindi divisa in spazi di memoria, ed il sistema operativo non deve eseguire solamente delle operazioni di 
+context switch tra un singolo processo, ma deve tenere traccia di tutti questi spazi disponibili nella memoria. Il sistema operativo crea un'astrazione della 
+memoria fisica, creando un spazio di indirizzi virtuale, in modo che ogni processo crede di essere l'unico processo in esecuzione. 
+Questo spazio è mediato dal sistema operativo, poiché questi indirizzi virtuali devono essere trasformati in indirizzi fisici da parte del sistema operativo. 
+In questo spazio vengono creati l'heap e lo stack, dove gli indirizzi dell'heap crescono incrementandoli, mentre gli indirizzi dello stack partono dalla fine della 
+memoria disponibile e crescono verso il basso. 
+Questi indirizzi logici non permettono all'utente o al programmatore di interfacciarsi con gli indirizzi fisici. 
+
+%% TODO img stack/heap
+
+L'operazione di tradurre l'indirizzo logico ad indirizzo virtuale viene implementato tramite 
+
+Alcuni degli schemi di traduzione possibili includono solamente somme o sottrazioni, 
+
+%% TODO 
+
+Questi meccanismi di ottimizzazione cresceranno di complessità, per permettere di associare l'indirizzo logico all'indirizzo fisico. 
+Si considerano tra ipotesi non realistiche. Si suppone il processo sia contenuto in memoria principale in memoria contigua, quindi il processo non può essere frammentato. 
+Lo spazio di indirizzi logici è più piccolo dello spazio di memoria fisica. Questa ipotesi sembra non necessaria poiché non sembra possibile mappare un numero maggiore 
+di indirizzi di quelli disponibili dall'hardware del calcolatore. Si suppone infine che ogni spazio degli indirizzi abbia la stessa dimensione. 
+
+%% TODO ex applicazione in assembly
+
+
+Lo spazio di indirizzi di un determinato processo viene contenuto nella memoria fisica del calcolatore, quindi è necessario tradurre gli indirizzi logici a fisici. 
+Il modo più semplice per poter tradurre questi due indirizzi utilizza il meccanismo ``Base and Bound'', introducendo due nuovi registri hardware nel processore, 
+contenenti il primo l'indirizzo di memoria fisica dove parte lo spazio degli indirizzi del processo considerato. Mentre il registro di bound contiene sempre la 
+dimensione dello spazio degli indirizzi considerato. Se il primo indirizzo viene utilizzato per effettuare la traduzione tra indirizzi logici e virtuale, il secondo 
+viene utilizzato unicamente per effettuare controlli di sicurezza. 
+Questo permette di rifiutare richieste di accesso ad indirizzi logici corrispondenti ad indirizzi fisici non contenuti nello spazio di memoria dedicato al processo, 
+causando un segmentation fault ed il programma termina. 
+
+%% TODO 
+
+Il sistema operativo al termine di un programma deve rendere nuovamente disponibile lo spazio di memoria che gli aveva assegnato. Inoltre il context switch deve 
+recuperare i valori dei registri base e bound del processo che si vuole eseguire. 
+
+Il sistema operativo deve poter assegnare spazi liberi a dei processi che vogliono essere eseguiti. Per trovare questo spazio disponibile può utilizzare una lista 
+dove sono presenti tutti i valori del registro base corrispondenti a spazi di memoria vuoti. All'assegnazione di un processo ad uno spazio di memoria 
+libero, questo viene rimosso dalla ``free list''. Analogamente al termine di un processo, il suo spazio di memoria viene di nuovo inserito nella free list. 
+
+Il sistema operativo tiene conto dei valori dei registri base e bound tramite un processo di controllo PCB, ``Process Control Block'', per salvare e recuperare 
+questi valori ad ogni context switch. 
+
+
+Fino a questo punto il calcolatore deve poter supportare la distinzione tra lo spazio utente e lo spazio kernel, deve esser presente una coppia di registri base e bound 
+in tutti i core del processore. Deve essere possibile tradurre indirizzi virtuali e fisici e controllare la loro validità tramite un componente dedicato, per effettuare 
+queste somme. Devono essere presenti istruzioni privilegiate per poter aggiornare il contenuto dei registri aggiunti di base e bound. 
+Inoltre deve permette di sollevare eccezioni in caso si provi ad accedere ad indirizzi fuori dallo spazio degli indirizzi disponibile.  
+
+
 
 \end{document}
