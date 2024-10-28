@@ -130,10 +130,10 @@ Questo comando di default prende l'ultima versione dell'immagine disponibile, in
 versione disponibile. Questo tag viene associato dal produttore della versione arbitrariamente, quindi potrebbe non corrispondere all'ultima versione esistente dell'immagine. 
 In seguito per creare ed avviare il container si usa il seguente comando:
 \begin{minted}{powershell}
-prompt> docker container --name os2425 
-        --hostname sistemi-operativi -v dati:/corso -it chmod84/os2425
+prompt> docker container run --name os2425 
+        --hostname sistemi-operativi -v dati:/home/corso -it chmod84/os2425
 \end{minted}
-Questo comando crea un volume chiamato ``corso'' nella root del filesystem. 
+Questo comando crea un volume chiamato ``dati'' nella directory \verb|/home/corso|. 
 
 Per avviare o terminare un container si usano i comandi:
 \begin{minted}{powershell}
@@ -281,7 +281,7 @@ tutorial dir1 dir2 dir3 dir4 output.txt
 corso@sistemi-operativi:~$
 \end{minted}
 Si può esplicitare l'estensione del file, ma anche senza l'interprete dei comandi è in grado di creare un file di caratteri ASCII, quindi un file testuale. Per leggere il contenuto di un file quindi è possibile 
-inviare il suo contenuto allo stdout. Uno dei comandi per effettuare questo è \verb|cat|, ``Concatenata''. Prende come argomento la lista dei file di cui si vuole stampare il contenuto a schermo, e produce 
+inviare il suo contenuto allo stdout. Uno dei comandi per effettuare questo è \verb|cat|, ``Concatenate''. Prende come argomento la lista dei file di cui si vuole stampare il contenuto a schermo, e produce 
 una concatenazione dei contenuti di questi file:
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$ cat output.txt
@@ -462,7 +462,7 @@ corso@sistemi-operativi:~$
 Tuttavia questo non può essere effettuato per directory non vuote: 
 \begin{minted}{powershell}
 corso@sistemi-operativi:~$ rmdir dir2
-rmdir: failed to remove 'dir2': Directory no empty 
+rmdir: failed to remove 'dir2': Directory not empty 
 corso@sistemi-operativi:~$
 \end{minted}
 
