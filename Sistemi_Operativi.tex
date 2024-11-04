@@ -520,8 +520,8 @@ dove il risultato di uno viene inserito nello stdout e rappresenta l'input di un
 
 \clearpage
 
-\section{Sistemi Operativi}
-
+\section{Virtualizzazione del Processore: Esecuzione Diretta Limitata}
+\label{sec:edl}
 Quando un programma viene eseguito segue sempre una serie di passaggi, comuni per ogni programma in esecuzione su un processore, chiamato ciclo di fetch-decode-execute, 
 analizzato dettagliatamente nel corso di calcolatori elettronici:
 \begin{itemize}
@@ -1369,63 +1369,292 @@ chiamata \verb|ls|. Se la \verb|exec| fallisce, il controllo passa alla prossima
 
 \section{Virtualizzazione della Memoria}
 
-Ogni processo in esecuzione non tiene conto di nessun altro processo in esecuzione, non è in grado di sapere che altri processi sono in esecuzione. 
+Ogni processo in esecuzione non tiene conto di nessun altro processo, non è in grado di sapere che altri processi sono in esecuzione. 
 La virtualizzazione della memoria garantisce l'isolamento dei processi in esecuzione, in modo che non possono accedere in lettura o scrittura alla memoria di altri 
-processi. Per motivi di sicurezza e di affidabilità del sistema. Un astrazione della memoria sullo stesso modello dell'astrazione della CPU porta a dei benefici. 
+processi, per motivi di sicurezza e di affidabilità del sistema. 
+Fornisce ad ogni processo l'illusione di uno spazio di memoria libero da altri processi. Un astrazione della memoria sullo stesso modello dell'astrazione della CPU 
+porta a benefici simili, a quelli trattati per il processore. 
 
 
 Nei primi sistemi operativi ogni processo che veniva eseguito era l'unico programma attivo per volta, per un piccolo intervallo di tempo, a cui era disponibili tutta 
-la memoria non occupata dal sistema operativo. In questo modo l'utilizzo della memoria era molto efficiente. Nei sistemi moderni più di un processo vengono eseguiti 
-in contemporanea, in spazi di memoria diversi. La memoria viene quindi divisa in spazi di memoria, ed il sistema operativo non deve eseguire solamente delle operazioni di 
-context switch tra un singolo processo, ma deve tenere traccia di tutti questi spazi disponibili nella memoria. Il sistema operativo crea un'astrazione della 
-memoria fisica, creando un spazio di indirizzi virtuale, in modo che ogni processo crede di essere l'unico processo in esecuzione. 
-Questo spazio è mediato dal sistema operativo, poiché questi indirizzi virtuali devono essere trasformati in indirizzi fisici da parte del sistema operativo. 
-In questo spazio vengono creati l'heap e lo stack, dove gli indirizzi dell'heap crescono incrementandoli, mentre gli indirizzi dello stack partono dalla fine della 
-memoria disponibile e crescono verso il basso. 
+la memoria non occupata dal sistema operativo. In questo modo l'utilizzo della memoria era molto efficiente, per un singolo processo in esecuzione. 
+
+%% TODO img singolo processo in exec in ram
+
+Nei sistemi moderni più di un processo vengono eseguiti 
+in contemporanea, in spazi di memoria distinti, ed il sistema operativo non deve eseguire solamente delle operazioni di 
+context switch tra i processi, ma deve tenere traccia di tutti questi spazi disponibili nella memoria. 
+Questa tecnica aumenta l'utilizzazione e l'efficienza della memoria centrale, ma è prone ad accessi in memoria da parte di altri processi in esecuzione diversi da 
+quello corrente. 
+
+%% TODO img multipli processi in exec in ram 
+
+Il sistema operativo crea un'astrazione della 
+memoria fisica, creando un spazio di indirizzi virtuale, in modo che ogni processo crede di essere l'unico processo in esecuzione. Viene così risolto il problema 
+dell'accesso ad aree di memoria dedicate ad altri processi. 
+Questo spazio è mediato dal sistema operativo, poiché questi indirizzi virtuali devono essere trasformati in indirizzi fisici. 
+In questo spazio vengono creati l'heap e lo stack, dove gli indirizzi dell'heap e dello stack crescono in versi opposti. L'heap cresce dalla base, ovvero dal primo 
+indirizzo disponibile, mentre lo stack dall'ultimo, verso il basso. Lo spazio interno è lo spazio libero che può essere allocato al processo. 
 Questi indirizzi logici non permettono all'utente o al programmatore di interfacciarsi con gli indirizzi fisici. 
 
 %% TODO img stack/heap
 
-L'operazione di tradurre l'indirizzo logico ad indirizzo virtuale viene implementato tramite 
+L'heap contiene la memoria allocata dinamicamente dal programma in esecuzione, mentre lo stack contiene i valori e gli indirizzi di ritorno per chiamate a funzioni e 
+variabili locali. 
+Ogni indirizzo di un programma in esecuzione è un indirizzo virtuale, in seguito tradotto dal sistema operativo in un indirizzo fisico. Il programmatore quindi non è in 
+grado di gestire in alcun modo gli indirizzi fisici della macchina, solamente attraverso questi indirizzi virtuali. Si considera il seguente programma per 
+stampare l'indirizzo di varie locazioni di memoria di un processo in esecuzione:
+\begin{minted}{c}
+    #include <stdio.h>
+    #include <stdlib.h>
+    int main(int argc, char *argv[]){
+        printf("location of code : %p\n", (void *) main);
+        printf("location of heap : %p\n", (void *) malloc(1));
+        int x = 3;
+        printf("location of stack : %p\n", (void *) &x);
+        return x;
+    }
+\end{minted}
 
-Alcuni degli schemi di traduzione possibili includono solamente somme o sottrazioni, 
+Su una macchina Linux a 64 bit il risultato può essere simile al seguente:
+\begin{minted}{powershell}
+location of code : 0x40057d
+location of heap : 0xcf2010
+location of stack : 0x7fff9ca45fcc    
+\end{minted}
 
-%% TODO 
+L'indirizzo del codice e dei dati di questo processo si può ottenere dall'indirizzo dov'è contenuta la funzione \verb|main| e comincia a partire da \verb|0x400000|. 
+L'indirizzo dell'heap parte da \verb|0xcf2000|, e lo stack comincia, in senso decrescente, dall'indirizzo \verb|0x7fff9ca49000|. 
 
-Questi meccanismi di ottimizzazione cresceranno di complessità, per permettere di associare l'indirizzo logico all'indirizzo fisico. 
-Si considerano tra ipotesi non realistiche. Si suppone il processo sia contenuto in memoria principale in memoria contigua, quindi il processo non può essere frammentato. 
-Lo spazio di indirizzi logici è più piccolo dello spazio di memoria fisica. Questa ipotesi sembra non necessaria poiché non sembra possibile mappare un numero maggiore 
-di indirizzi di quelli disponibili dall'hardware del calcolatore. Si suppone infine che ogni spazio degli indirizzi abbia la stessa dimensione. 
+\subsection{Traduzione tra Indirizzi Virtuali e Fisici: Base \& Bound}
 
-%% TODO ex applicazione in assembly
+L'utilizzo della virtualizzazione permette un'elevata flessibilità di gestione della memoria, e permette di individuare accessi scorretti alla memoria da parte del 
+sistema operativo. Nel meccanismo di \ref{sec:edl} per la virtualizzazione della CPU, si utilizzano supporti hardware per permettere al sistema operativo di 
+rimanere sempre in controllo. 
+Analogamente si vogliono utilizzare dei supporti hardware per ottenere risultati in termini di efficienza e controllo sulla virtualizzazione della memoria. 
+Questo supporto consiste in un componente dedicato per realizzare le trasformazioni tra indirizzi virtuali a fisici, in modo da non dover sprecare il tempo di calcolo 
+del processore per eseguire queste, per ora semplici, operazioni di traduzione. Anche se sono presenti queste componenti dedicate è il sistema operativo a guidarle 
+nella traduzione. Questo componente prende il nome di ``Memory Management Unit'' (MMU). 
+
+Alcuni degli schemi di traduzione possibili includono solamente somme o sottrazioni, ma ulteriori meccanismi possono richiedere operazioni più costose in termini di 
+tempo di calcolo. 
+Questi meccanismi di ottimizzazione cresceranno di complessità, per permettere di associare l'indirizzo logico all'indirizzo fisico in modi migliori.  
+Si considerano tra ipotesi, non realistiche, per cominciare a definire semplici modelli di traduzione:
+\begin{itemize}
+    \item Si suppone il processo sia contenuto in memoria principale in memoria contigua, quindi il processo non può essere frammentato; 
+    \item Lo spazio di indirizzi logici è più piccolo dello spazio di memoria fisica. Questa ipotesi sembra non necessaria poiché non sembra possibile mappare un numero maggiore 
+di indirizzi di quelli disponibili dall'hardware del calcolatore;
+    \item Si suppone infine che ogni spazio degli indirizzi abbia la stessa dimensione.
+\end{itemize} 
+
+Una semplice operazione di assegnazione, come l'assegnazione ed incremento di un valore ad una variabile locale \verb|x=x+1| comprende una serie di operazioni. 
+Bisogna caricare il valore della variabile dalla memoria, incrementarlo di uno ed in seguito spostarlo nuovamente in memoria centrale. In assembly quest'operazione 
+consiste nelle seguenti istruzioni:
+\begin{minted}{gas}
+    movl 0x0(%ebx), %eax      ; load 0+ebx into eax
+    addl $0x01, %eax          ; add 1 to eax register
+    movl %eax, 0x0(%ebx)      ; store eax back to mem
+\end{minted}
 
 
 Lo spazio di indirizzi di un determinato processo viene contenuto nella memoria fisica del calcolatore, quindi è necessario tradurre gli indirizzi logici a fisici. 
-Il modo più semplice per poter tradurre questi due indirizzi utilizza il meccanismo :``Base and Bound'', introducendo due nuovi registri hardware nel processore, 
-contenenti il primo l'indirizzo di memoria fisica dove parte lo spazio degli indirizzi del processo considerato. Mentre il registro di bound contiene sempre la 
-dimensione dello spazio degli indirizzi considerato. Se il primo indirizzo viene utilizzato per effettuare la traduzione tra indirizzi logici e virtuale, il secondo 
-viene utilizzato unicamente per effettuare controlli di sicurezza. 
-Questo permette di rifiutare richieste di accesso ad indirizzi logici corrispondenti ad indirizzi fisici non contenuti nello spazio di memoria dedicato al processo, 
-causando un segmentation fault ed il programma termina. 
+Il modo più semplice per poter tradurre questi due indirizzi utilizza il meccanismo denominato ``Base and Bound '', introducendo due nuovi registri hardware nel 
+processore. Questi contengono l'indirizzo di memoria fisica dove parte lo spazio degli indirizzi del processo considerato, ``Base'',. Mentre il registro di ``Bound'' 
+contiene sempre la dimensione dello spazio degli indirizzi considerato. Se il primo indirizzo viene utilizzato per effettuare la traduzione tra indirizzi logici e 
+virtuali, il secondo viene utilizzato unicamente per effettuare controlli di sicurezza. 
+\begin{equation}
+    \text{Indirizzo Fisico}=\text{Base}+\text{Indirizzo Virtuale}
+\end{equation}
 
-%% TODO 
+La MMU deve quindi poter effettuare solamente addizioni. Il registro di bound permette di rifiutare richieste di accesso ad indirizzi logici corrispondenti ad 
+indirizzi fisici non contenuti nello spazio di memoria dedicato al processo. Se l'indirizzo fisico ottenuto è maggiore dell'indirizzo base più l'indirizzo bound. 
+\begin{equation*}
+    \cancel{\text{Base}}+\text{Bound}<\cancel{\text{Base}}+\text{Indirizzo Virtuale}
+\end{equation*}
 
-Il sistema operativo al termine di un programma deve rendere nuovamente disponibile lo spazio di memoria che gli aveva assegnato. Inoltre il context switch deve 
-recuperare i valori dei registri base e bound del processo che si vuole eseguire. 
+Quindi semplicemente se l'indirizzo virtuale è più grande del valore contenuto nel registro bound per il dato processo:
+\begin{equation}
+    \text{Indirizzo Virtuale}>\text{Bound}
+\end{equation}
+
+In questo caso viene sollevato un errore ed il processo termina. 
+
+Il sistema operativo per utilizzare questo approccio, alla creazione di un processo deve allocare una sezione della memoria centrale e popolare i registri 
+di base e bound, se è presente uno spazio libero in memoria centrale. 
+Il sistema operativo al termine di un programma deve rendere nuovamente disponibile lo spazio di memoria che aveva assegnato al processo. Inoltre il context switch deve 
+recuperare i valori dei registri base e bound del processo che si vuole eseguire, oppure memorizzarli per poter nuovamente accedere al processo fermato. 
 
 Il sistema operativo deve poter assegnare spazi liberi a dei processi che vogliono essere eseguiti. Per trovare questo spazio disponibile può utilizzare una lista 
 dove sono presenti tutti i valori del registro base corrispondenti a spazi di memoria vuoti. All'assegnazione di un processo ad uno spazio di memoria 
-libero, questo viene rimosso dalla ``free list''. Analogamente al termine di un processo, il suo spazio di memoria viene di nuovo inserito nella free list. 
+libero, questo viene rimosso dalla ``free list''. Analogamente al termine di un processo, il suo spazio di memoria viene inserito nella free list. 
 
-Il sistema operativo tiene conto dei valori dei registri base e bound tramite un processo di controllo PCB, ``Process Control Block'', per salvare e recuperare 
-questi valori ad ogni context switch. 
+Il sistema operativo tiene conto dei valori dei registri base e bound tramite un processo di controllo PCB, ``Process Control Block'', per salvare e recuperare questi 
+valori ad ogni context switch. 
+
+Per poter implementare i meccanismi appena descritti bisogna modificare opportunamente l'hardware ed il sistema operativo. 
+Il calcolatore deve poter supportare la distinzione tra lo spazio utente e lo spazio kernel, deve esser presente una coppia di registri base e bound 
+in tutti i core del processore. Deve essere possibile tradurre indirizzi virtuali e fisici, controllare la loro validità tramite un componente dedicato. Devono essere 
+presenti istruzioni privilegiate per poter aggiornare il contenuto dei registri aggiunti di base e bound. Inoltre deve permette di sollevare eccezioni in caso si provi 
+ad accedere ad indirizzi fuori dallo spazio degli indirizzi disponibile.  
+
+\subsection{Segmentazione}
+
+Con questo meccanismo base e bound lo spazio libero occupa comunque memoria fisica, poiché le zone di memoria vengono divise ed assegnate a priori, sprecando molta 
+memoria. Considera lo spazio degli indirizzi come una scatola nera. 
+
+Si vuole cercare a rendere ``white box'' questo approccio, riconoscendo fin da subito di avere delle porzioni di memoria utilizzate per un determinato scopo. Si parla 
+quindi di segmenti, la nuova unità base di allocazione della memoria, per evitare di riallocare per intero uno spazio di indirizzi. Un segmento rappresenta una porzione 
+contigua di questo memoria, in uno spazio di indirizzi. Un segmento contiene dati logicamente coerenti con i dati dello spazio. Ogni segmento contiene dati differenti 
+e può essere assegnato ad una zona diversa di memoria fisica. Si può ottenere una situazione dove le varie unità del programma vengono assegnate a diversi 
+segmenti distinti, in posizioni diverse della memoria fisica. In questo modo non si spreca memoria occupando l'intero spazio degli indirizzi, ma solamente lo spazio 
+di memoria strettamente necessario per i vari segmenti. Ma in questo modo bisogna avere una coppia di valori base e bound per ogni segmento, essendo in posizioni di 
+memoria fisica diverse. Per ogni segmento viene utilizzato il meccanismo di base e bound, in modo da poter tradurre indirizzi virtuali ad indirizzi fisici. Si 
+memorizzano questi valori in un ulteriore componente hardware, chiamato ``Segment Register'', registro dei segmenti. 
+
+I segmenti possono essere fissi o di lunghezza variabile, in risposta alle caratteristiche dei dati contenuti, come l'heap e lo stack che variano nel tempo. 
+Analogamente al base e bound normale, crescono l'heap verso l'alto ed il bound verso il basso. Se uno di questi segmenti raggiunge il limite della memoria fisica deve 
+essere spostato in una diversa zona contigua di memoria. 
+
+Per accedere a questi segmenti si utilizza il medesimo meccanismo di base e bound sui valori memorizzati per lo specifico segmento. Bisogna sapere quindi quale porzione 
+dello spazio degli indirizzi è assegnato ad ogni segmento. Per determinare a quale segmento appartiene un indirizzo virtuale si utilizza invece dell'indirizzo un 
+offset, ottenuto dall'indirizzo virtuale, conoscendo la dimensione dei segmenti:
+\begin{equation}
+    \text{Indirizzo Fisico}=\text{Offset}+\text{Base}
+\end{equation}
+Se i segmenti hanno la stessa dimensione, salvata nel valore bound, si può effettuare semplicemente considerando 
+la divisione tra l'indirizzo virtuale attuale e la dimensione del segmento:
+\begin{equation*}
+    \text{Offset}=\text{Indirizzo Virtuale}-\left\lfloor\displaystyle\frac{\text{Indirizzo Virtuale}}{\text{Bound}}\right\rfloor\cdot\text{Bound}
+\end{equation*}
+Quando si prova ad accedere ad un indirizzo di memoria al di fuori del segmento che si sta referenziando, viene sollevato un errore di 
+tipo segmentation fault. Ed il sistema operativo termina l'esecuzione del programma. 
+L'hardware è in grado di identificare che l'indirizzo è ``out of bounds''. 
+
+Il numero $m$ di segmenti che compongono lo spazio degli indirizzi può essere noto a priori. Dati indirizzi virtuali da $n$ bit, si può attribuire un indice $r$ a 
+ciascuno di questi $m$ segmenti. I primi $\lceil\log_2{m}\rceil$ bit significativi dell'indirizzo virtuale rappresentano l'indirizzo del segmento. I restanti bit $n-r$
+identificano l'offset all'interno di quel segmento. 
+
+%% TODO img indirizzo ex: CE, primi bit per segmento, altri bit per offset
+
+Per tenere traccia del verso in cui crescono i segmenti non fissi, si utilizza un altro campo, oltre a quelli contenenti la coppia di valori base e bound, per 
+indicare se cresce positivamente o negativamente. Questo viene quindi memorizzato in un altro componente hardware nel registro dei segmenti. In generale se il valore 
+contenuto in questo bit è uno, allora cresce positivamente, altrimenti cresce negativamente. 
+
+%% TODO img tabella Segment Register
+
+I segmenti possono essere condivisi tra vari spazi di indirizzi, per condividere informazioni tra vari processi, quindi si utilizza un ulteriore campo per impedire 
+accessi non consentiti. Questi bit indicano il permesso di eseguire letture, scritture o esecuzione sui segmenti indicati. Poiché nei sistemi operativi moderni 
+è ancora comune la condivisione di codice tra varie applicazioni e quindi processi. 
+
+Nei sistemi operativi moderni esistono diversi tipi di segmenti di proprietà differenti e contrapposte. Esistono due tipi principali di segmentazione:
+\begin{itemize}
+    \item Coarse-Grained;
+    \item Fine-Grained.
+\end{itemize}
+
+Nel primo tipo di segmentazione, lo spazio degli indirizzi viene diviso in pochi segmenti di grande dimensione, questo permette maggiore facilità nell'accesso ai dati, 
+con un numero minore di registri base e bound da implementare. Ma questo strategia è soggetta a massicce frammentazioni interne. 
+
+La seconda strategia di realizzazione di segmenti consiste nel creare tanti segmenti di piccole dimensioni. A livello hardware richiedono di molti più registri base 
+e bound, quindi un numero limitato di registri definiti a priori potrebbe non bastare, ma offre una frammentazione decisamente inferiore rispetto all'approccio 
+precedente. 
+
+Per memorizzare nella memoria fisica questi segmenti, il sistema operativo utilizza tecniche diverse. La più semplice è la frammentazione esterna, dove i vari segmenti 
+provenienti da spazi degli indirizzi distinti vengono posizionati in memoria lasciando piccoli buchi tra di loro. Si dice esterna poiché è una frammentazione esterna 
+all'unità di memoria considerata, il segmento. In questo modo tra vari spazi si trova memoria libera sprecata, poiché non sarebbe possibile utilizzare questi piccoli 
+spazi per comporre nuovi segmenti. Infatti i segmenti richiedono di spazi di memoria fisica contigua.  
+
+Un altro approccio disponibili al sistema operativo è la compattazione, ovvero spostare e riallocare segmenti già presenti nella memoria fisica per ottimizzare gli 
+spazi. \\Ma questo processo è brutto e cattivo (Marco è stato qui!) \\ %% TODO idea di scilla cambiare
+Questo processo di spostamento richiede la lettura della memoria fisica dei vari segmenti, ma questa lettura byte per byte è molto costosa in termini di efficienza. 
+Durante l'esecuzione di un processo infatti bisogna fermare la sua esecuzione, copiare i valori contenuti nei segmenti e modificare i valori dei registri base e bound. 
+
+%% TODO img frammentato -> non frammentato pg. 13
 
 
-Fino a questo punto il calcolatore deve poter supportare la distinzione tra lo spazio utente e lo spazio kernel, deve esser presente una coppia di registri base e bound 
-in tutti i core del processore. Deve essere possibile tradurre indirizzi virtuali e fisici e controllare la loro validità tramite un componente dedicato, per effettuare 
-queste somme. Devono essere presenti istruzioni privilegiate per poter aggiornare il contenuto dei registri aggiunti di base e bound. 
-Inoltre deve permette di sollevare eccezioni in caso si provi ad accedere ad indirizzi fuori dallo spazio degli indirizzi disponibile.  
+%% TODO repo segmentation py
 
+\subsection{Paginazione}
+
+La segmentazione viene utilizzata per dividere lo spazio degli indirizzi in più pezzi, di dimensione variabile. Uno dei problemi di questo approccio è la frammentazione 
+della memoria.  
+
+La tecnica della paginazione o ``Paging'' divide lo spazio degli indirizzi in unità di lunghezza fissa chiamate pagine. Allo stesso modo viene divisa anche la 
+memoria fisica in dei ``page frame''. Il problema della traduzione diventa quindi come convertire in modo efficiente il numero di pagina virtuale, ``Virtual Page Number'' (VPN) 
+al numero di pagina fisica ``Page Frame Number'' (PFN). 
+
+Questo approccio è più efficiente rispetto alla segmentazione, poiché non bisogna conoscere a priori come l'heap e lo stack crescono e c'è bisogno che le pagine 
+contengano dati logicamente coerenti. Per di gestire gli spazi liberi molto più facilmente che con la segmentazione, dove si verifica il fenomeno della frammentazione, 
+dato che la pagina virtuale ed il page frame sono della stessa dimensione. 
+
+In generale la prima, o prime, page frame vengono riservate per il sistema operativo. Analogamente per i segmenti, dato uno spazio degli indirizzi avente $h$ byte, 
+sono necessari $n=\lfloor\log_2{h}\rfloor$ per realizzare un indirizzo. Questo spazio viene diviso in $m$ pagine virtuali diverse, quindi i primi $r=\lfloor\log_2{m}\rfloor$ 
+bit dell'indirizzo individuano la pagina corrispondente, metre i restanti $n-r$ individuano l'offset. 
+Per convertire l'indice di una VPN ad un PFN si utilizza una tabella contenente gli identificatori corrispondenti nella memoria fisica. I primi $r$ bit vengono sostituiti 
+da $r'$ bit corrispondenti all'indirizzo della pagina nella memoria fisica. I restanti $n-r$ bit rimangono invariati. 
+
+%% TODO img differenza tra i due indirizzi con page table in mezzo 
+
+Questa tabella viene chiamata ``page table'' ed è una struttura dati utilizzata per indicizzare le pagine e creare una mappatura tra gli indirizzi di pagina virtuale 
+e fisica. Si può realizzare nella sua forma più semplice utilizzando un array, con una tabella lineare. Questo array viene indicizzato tramite l'indirizzo di pagina 
+virtuale VPN da parte del sistema operativo, ed il valore contenuto nell'indice corrispondente contiene il ``Page-Number Entry'' o PTE. 
+Il PTE contiene il numero di pagina fisica, dei bit di validità, di protezione come per i segmenti, per indicare se sulla data pagina si hanno permessi di lettura, 
+scrittura o esecuzione. Ulteriori bit indicano se questa pagina è stata spostata dalla memoria al disco. Dei bit chiamati ``Dirty Bit'' per indicare se la pagina è stata 
+modificata da quando è stata spostata in memoria. Infine sono presenti dei bit di accesso per indicare se la pagina è stata acceduta. 
+
+%% TODO img ex PTE x86 pg. 9
+
+Il problema della paginazione è la quantità di spazio necessario per conservare queste page table. Mentre per i segmenti erano necessari pochi registri di base e bound 
+per memorizzare queste coppie. Anche nel caso più semplice è necessario un array di lunghezza pari al numero di pagine disponibili nella memoria fisica. 
+Questo dipende dalla dimensione della singola pagina, su Linux questo si può controllare con il comando \verb|getconf PAGE_SIZE|. In generale l'ordine di grandezza per 
+queste tabelle è sui centinaia di MB. 
+
+Per individuare una certa PTE, l'indirizzo al primo elemento della tabella è necessario, se viene indicizzato come un array. Quindi per ogni traduzione di un'indirizzo di 
+memoria è necessario effettuarne un'altra analoga per questo elemento. Il sistema operativo è quindi costretto ad effettuare il doppio delle operazioni per ogni 
+accesso in memoria, e questa procedura risulta molto lenta. 
+
+Per semplificare questo processo si possono effettuare operazioni intermedie tramite delle ``maschere'' per la VPN o l''offset, queste maschere sono delle sequenze dei 
+bit che contengono bit non nulli solo in corrispondenza della VPN o dell'offset. Quando si effettua un'operazione and bit per bit tra l'indirizzo di pagina virtuale 
+e queste maschere si ottiene il VPN e l'offset senza doversi trasportare il resto dell'indirizzo. 
+
+
+Per mostrare il funzionamento e la lentezza della paginazione, si considera una semplice operazione di spostamento in memoria, 
+ed un possibile frammento di codice utilizzato per convertire un'indirizzo di pagina virtuale ad uno fisico:
+\begin{minted}{c}
+    // Extract the VPN from the virtual address
+    VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+
+    // Form the address of the page-table entry (PTE)
+    PTEAddr = PTBR + (VPN * sizeof(PTE))
+
+    // Fetch the PTE
+    PTE = AccessMemory(PTEAddr)
+
+    // Check if process can access the page
+    if (PTE.Valid == False)
+        RaiseException(SEGMENTATION_FAULT)
+    else if (CanAccess(PTE.ProtectBits) == False)
+        RaiseException(PROTECTION_FAULT)
+    else
+        // Access is OK: form physical address and fetch it
+        offset = VirtualAddress & OFFSET_MASK
+        PhysAddr = (PTE.PFN << PFN_SHIFT) | offset
+        Register = AccessMemory(PhysAddr)
+\end{minted}
+
+Il primo passaggio consiste nel convertire l'ottenere la VPN partendo dall'indirizzo virtuale. Si utilizza una maschera per estrarre i primi $r$ bit della VPN, ed 
+in seguito si effettua un'operazione di shift a destra di un numero di bit pari all'offset, per ottenere la \verb|VPN|. 
+
+Dopo aver ottenuto la \verb|VPN|, si accede alla page table, e si suppone sia già in memoria, quindi non debba essere eseguita un'altra operazione di accesso, all'indirizzo 
+\verb|PTBR|. Si accede quindi all'elemento corrispondente nella tabella, come se fosse un array, partendo da \verb|PTBR| e scorrendo verso destra di un numero \verb|VPN| 
+di posizioni, si raggiunge la PTE corrispondente e si salva nella variabile \verb|PTEAddr|. Noto l'indirizzo dov'è contenuta la PTE corrispondente alla VPN si 
+accede con la funzione \verb|AccessMemory()| e si salva il contenuto in \verb|PTE|. 
+Avendo la PTE possono essere effettuate verifiche di validità sull'indirizzo e sulla validità dell'operazione, sollevando in caso segmentation fault oppure protection 
+fault. 
+Se l'indirizzo è valido, ed è consentito l'accesso, si combina il PFN dalla PTE all'offset per realizzare l'indirizzo fisico, e si salva il suo contenuto su 
+di un registro. 
+
+\clearpage
 
 
 \end{document}
