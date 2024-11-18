@@ -1654,7 +1654,144 @@ fault.
 Se l'indirizzo è valido, ed è consentito l'accesso, si combina il PFN dalla PTE all'offset per realizzare l'indirizzo fisico, e si salva il suo contenuto su 
 di un registro. 
 
-\clearpage
 
+La tecnica di paging può essere molto lenta, data una semplice istruzione di accesso in memoria:
+\begin{minted}{gas}
+    movl 21, %eax
+\end{minted}
+Bisogna prima determinare la VPN, effettuando un'operazione and tra l'indirizzo virtuale e la maschera della VPN. Per interpretare questo valore correttamente 
+bisogna shiftare a destra di un numero di bit pari al numero di bit dell'offset:
+\begin{minted}{c}
+    VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+\end{minted}
+Questo valore ottenuto si utilizza come indice della page table per determinare la page table entry. Si accede a questa porzione di memoria dal suo indirizzo, dato 
+che si tratta di un array:
+\begin{minted}{c}
+    PTEAddr = PTBR + (VPN * sizeof(PTE))
+    PTE = AccessMemory(PTEAddr)
+\end{minted}
+Da questa PTE si leggono i suoi campi per determinare se è un accesso valido, è accessibile ed il valore della pagina fisica PFN. Se non è un accesso valido oppure 
+si tratta di una zona di memoria senza i permessi di accesso in lettura si interrompe questo accesso. Altrimenti si continua l'accesso e bisogna determinare l'offset, 
+analogamente a come si è ottenuto il VPN:
+\begin{minted}{c}
+    offset = VirtualAddress & OFFSET_MASK
+\end{minted} 
+Si ipotizza che la memoria fisica sia maggiore della memoria virtuale. Dato il PFN bisogna effettuare uno shift verso sinistra di tanti bit quanti i bit di 
+offset. Per completare l'indirizzo si aggiungono i bit dell'offset con un'operazione di or. 
+
+
+Se sono presenti molti processi con spazi di indirizzi, ogni processo ha la propria page table, identificata dal PTBR, contenuto in un registro hardware, popolato nel 
+momento in cui si effettua un context switch. 
+
+%% TODO file esercizi
+
+Dato un sistema con uno spazio fisico di 32K ed uno spazio degli indirizzi di 16K e pagine di dimensione 4K. Con PTE eventi il bit più significativo, il più a sinistra, 
+è il bit di validità, se è 1 la traduzione è valida, altrimenti se è 0 non è valida:
+\begin{itemize}
+    \item \verb|0|: \verb|0x8000000c|;
+    \item \verb|1|: \verb|0x00000000|;
+    \item \verb|2|: \verb|0x00000000|;
+    \item \verb|3|: \verb|0x80000006|.
+\end{itemize}
+
+Determinare l'indirizzo fisico dei seguenti indirizzi virtuali oppure specificare se sono invalidi:
+\begin{itemize}
+    \item \verb|0x00003229| (\verb|12841|);
+    \item \verb|0x00001369| (\verb|4969|);
+    \item \verb|0x00001e80| (\verb|7808|);
+    \item \verb|0x00002556| (\verb|9558|);
+    \item \verb|0x00003a1e| (\verb|14878|), 
+\end{itemize}
+
+Per semplificare la procedura per determinare il valore dei bit più significativi, si vuole sapere in quale pagina è presente l'indirizzo, quindi è sufficiente determinare 
+il quoziente tra l'indirizzo virtuale e la dimensione della pagina:
+\begin{gather*}
+    \mathrm{VPN}:\left\lfloor\displaystyle\frac{12841}{4098}\right\rfloor=3
+\end{gather*}
+L'offset si calcola come la posizione nella pagina di questo indirizzo calcolata come:
+\begin{equation*}
+    \mathrm{Offset}:12831-3*4096=553
+\end{equation*}
+Il PFN corrispondente è \verb|80000006|, è valido avendo il bit più significativo pari ad uno, ed ha un indirizzo fisico 6. Per cui l'indirizzo fisico corrispondente è:
+\begin{equation*}
+    6*4096+553=25129
+\end{equation*}
+
+\subsubsection{Translation Lookaside Buffer}
+
+Esistono sistemi che utilizzano page table gerarchie oppure utilizzano paging e segmentazione contemporaneamente. 
+La parte più costosa di un'opzione di accesso con paging è l'accesso alla page table, poiché vengono effettuati due accessi per ogni singolo accesso. 
+Per migliorare notevolmente le prestazioni si può 
+inserire un componente hardware aggiuntivo chiamato ``Translation Lookaside Buffer''. Questo componente è una cache contenente le traduzioni più popolari 
+dalla page table. Se il valore voluto è contenuto si ha una TLB hit e si ha il valore per effettuare la traduzione, altrimenti se non è presente si ha una TLB miss 
+e bisogna accedere alla page table direttamente. 
+
+%% TODO img tlb
+
+Si considera una possibile implementazione di questa tecnica: 
+\begin{minted}{c}
+    VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+    (Success, TlbEntry) = TLB_Lookup(VPN)
+        if(Success == True){ TLB hit
+            if(CanAccess(TlbEntry.ProtectionBit) == True){
+                offset = VirtualAddress & OFFSET_MASK
+                PhysAddr = (PTE.PFN << PFN_SHIFT) | offset
+                Register = AccessMemory(PhysAddr)
+            }else RaiseException(PROTECTION_FAULT)
+        }else{
+            // stesso codice precedente
+            // ...
+
+            TLB_Insert(VPN, PTE.PFN, PTE.ProtectBit)
+        }   
+\end{minted}
+
+%% TODO completare TLB_Insert
+
+Se non viene trovata nella TLB, viene inserito il valore nella TLB, dopo aver effettuato l'accesso alla page table. 
+
+Si seguono due principi di località temporale e località spaziale. Per la località temporale un'istruzione o un dato che è stato acceduto è molto probabile venga 
+acceduto in futuro. La località spaziale afferma che se un determinato programma accede ad un indirizzo, è molto probabile acceda ad indirizzi vicini. 
+Se si vuole accedere a dati spazialmente o temporalmente vicini allora la TLB aumenta notevolmente le prestazioni, poiché si vuole accedere alle stesse pagine.  
+Una TLB potrebbe avere 32, 64, 128 e molto raramente 256 istanze. 
+La struttura di un'istanza in questa cache è molto simile ad una PTE, con l'indirizzo virtuale VPN, l'indirizzo fisico PFN ed un terzo campo per informazioni di validità o 
+di protezione degli accessi. 
+
+Se si effettua un context switch il VPN potrebbe corrispondere ad un VPN di un altro processo nella TLB. Per evitare questi conflitti si utilizza un altro campo 
+ASID per distinguere quale processo ha effettuato l'accesso. Inoltre è possibile condividere una pagina, inserendo nella TLB lo stesso PFN per due VPN diverse. 
+
+Per sostituire gli elementi si possono utilizzare diverse politiche. La politica LRU, ``Least Recently Used'' impone che vengano scartati i dati meno recenti dalla 
+TLB. Per il principio di località temporale è più probabile che gli ultimi indirizzi visitati vengano visitati nuovamente. Nel caso in cui si vuole accedere ad una 
+sequenza di pagine di un'unità più grande del numero di slot disponibili nel LRU, si avrà solamente TLB miss, poiché si accede alle pagine non appena vengono rimosse. 
+
+\subsubsection{Meccanismo di Swapping}
+
+Inizialmente lo spazio degli indirizzi doveva essere minore della memoria fisica disponile su una machina, ma questo non è sempre vero. Si può avere necessita di 
+inserire memoria in etani diversi spazi di indirizzi per ogni processo in esecuzione. 
+
+%% TODO img gerarchia della memoria nei sistemi moderni
+
+Generante più grande è la memoria, più lenti sono i tempi di accesso, analogamente l'inverso, più è veloce l'accesso più è piccola la memoria disponibile. Si intrattiene 
+la possibilità di inserire pagine non utilizzate attualmente su memorie secondarie, non in memoria principale. In questo modo si ha una quantità di memoria più grande. 
+
+Si può suddividere la memoria fisica in page frame, e si suddivide allo stesso modo nella memoria di massa, riservato per un utilizzo previsto per estendere la memoria 
+fisica appartenente al sistema. Questo spazio viene chiamato spazio di swap. 
+
+
+Si deve in qualche modo distinguere se una determinata pagina si trova nella memoria principale oppure in una memoria secondaria. Si può utilizzare un bit di 
+presenza, ed in base a questo valore si fornisce un interpretazione diverse al PFN, può indicare una pagina in memoria principale oppure un blocco in memoria secondaria. 
+
+Si parla di ``Page Fault'' quando un programma tenta di effettuare un accesso in una pagina che si trova in memoria secondaria. Quando accade il sistema operativo 
+deve portare questo dato in memoria principale. Se necessario bisogna modificare il PFN per indicare che si tratta di una pagina in memoria principale e non più di un blocco 
+in memoria secondaria. 
+
+
+%% TODO resto della lezione e programma mem.c, vmstat e top
+
+Se termina la memoria disponibile, il sistema operativo comincia ad uccidere processi, può essere il processo che sta occupando la memoria, oppure 
+altri processi che occupano meno memoria. Ma il sistema operativo non può uccidere sé stesso, ma è possibile che la terminazione di alcuni processi 
+possa generare instabilità nel sistema. 
+
+\clearpage
 
 \end{document}
