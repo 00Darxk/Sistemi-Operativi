@@ -932,7 +932,7 @@ interrupt che passa il controllo al sistema operativo, da parte di un gestore di
 processi che vengono eseguiti non gestiscono il controllo del processore. In questo modo è possibile al sistema operativo riprendere il controllo nonostante la presenza 
 di applicazioni malevoli. Questo timer lavora nell'ordine dei millisecondi, ed è indipendente dalla frequenza di aggiornamento del processore. 
 
-Un processo potrebbe non terminare tra due di questi timer interrupt, quindi il controllo passa al sistema operativo alla terminazione del programma, ed in alcuni casi 
+Un processo potrebbe terminare tra due di questi timer interrupt, quindi il controllo passa al sistema operativo alla terminazione del programma, ed in alcuni casi 
 viene disattivato il gestore degli interrupt e si scartano alcuni interrupt. Se dei processi hanno una priorità diversa, invece di terminare la loro esecuzione al primo 
 interrupt, il controllo viene lasciato al processo invece del sistema operativo, fino ad un certo numero di interrupt. 
 
@@ -1683,7 +1683,7 @@ offset. Per completare l'indirizzo si aggiungono i bit dell'offset con un'operaz
 Se sono presenti molti processi con spazi di indirizzi, ogni processo ha la propria page table, identificata dal PTBR, contenuto in un registro hardware, popolato nel 
 momento in cui si effettua un context switch. 
 
-%% TODO file esercizi
+\subsubsection{Esercizi}
 
 Dato un sistema con uno spazio fisico di 32K ed uno spazio degli indirizzi di 16K e pagine di dimensione 4K. Con PTE eventi il bit più significativo, il più a sinistra, 
 è il bit di validità, se è 1 la traduzione è valida, altrimenti se è 0 non è valida:
@@ -1700,7 +1700,7 @@ Determinare l'indirizzo fisico dei seguenti indirizzi virtuali oppure specificar
     \item \verb|0x00001369| (\verb|4969|);
     \item \verb|0x00001e80| (\verb|7808|);
     \item \verb|0x00002556| (\verb|9558|);
-    \item \verb|0x00003a1e| (\verb|14878|), 
+    \item \verb|0x00003a1e| (\verb|14878|).
 \end{itemize}
 
 Per semplificare la procedura per determinare il valore dei bit più significativi, si vuole sapere in quale pagina è presente l'indirizzo, quindi è sufficiente determinare 
@@ -1713,9 +1713,21 @@ L'offset si calcola come la posizione nella pagina di questo indirizzo calcolata
     \mathrm{Offset}:12831-3*4096=553
 \end{equation*}
 Il PFN corrispondente è \verb|80000006|, è valido avendo il bit più significativo pari ad uno, ed ha un indirizzo fisico 6. Per cui l'indirizzo fisico corrispondente è:
-\begin{equation*}
+\begin{equation}
     6*4096+553=25129
-\end{equation*}
+\end{equation}
+
+Il secondo indirizzo $4969$ si riferisce al secondo PFN, dato che $\lfloor4969/4096\rfloor=1$. Ma questa pagina ha il bit più significativo pari a zero, quindi la traduzione 
+non è valida. Allo stesso modo per l'indirizzo $7808$. L'indirizzo $9558$ si riferisce alla seconda terza pagina, anch'essa si riferisce ad un indirizzo fisico con 
+il bit più significativo pari a zero, quindi neanche questa traduzione è valida. 
+
+L'ultimo indirizzo appartiene alla quarta VPN: 
+
+\begin{gather*}
+    \mathrm{VPN}:\left\lfloor\displaystyle\frac{14878}{4096}\right\rfloor=3\\
+    14878-4096*3=2590\\
+    6*4096+2590=27166\theequation
+\end{gather*}
 
 \subsubsection{Translation Lookaside Buffer}
 
@@ -1729,24 +1741,23 @@ e bisogna accedere alla page table direttamente.
 %% TODO img tlb
 
 Si considera una possibile implementazione di questa tecnica: 
+
 \begin{minted}{c}
     VPN = (VirtualAddress & VPN_MASK) >> SHIFT
     (Success, TlbEntry) = TLB_Lookup(VPN)
-        if(Success == True){ TLB hit
+        if(Success == True){ // TLB hit
             if(CanAccess(TlbEntry.ProtectionBit) == True){
                 offset = VirtualAddress & OFFSET_MASK
                 PhysAddr = (PTE.PFN << PFN_SHIFT) | offset
                 Register = AccessMemory(PhysAddr)
             }else RaiseException(PROTECTION_FAULT)
-        }else{
-            // stesso codice precedente
-            // ...
-
+        }else{ // TLB miss
+            
+            // stesso codice per l'accesso          
             TLB_Insert(VPN, PTE.PFN, PTE.ProtectBit)
+            RetryInstruction()
         }   
 \end{minted}
-
-%% TODO completare TLB_Insert
 
 Se non viene trovata nella TLB, viene inserito il valore nella TLB, dopo aver effettuato l'accesso alla page table. 
 
@@ -1757,17 +1768,24 @@ Una TLB potrebbe avere 32, 64, 128 e molto raramente 256 istanze.
 La struttura di un'istanza in questa cache è molto simile ad una PTE, con l'indirizzo virtuale VPN, l'indirizzo fisico PFN ed un terzo campo per informazioni di validità o 
 di protezione degli accessi. 
 
+%% TODO img istanza del TLB 
+
 Se si effettua un context switch il VPN potrebbe corrispondere ad un VPN di un altro processo nella TLB. Per evitare questi conflitti si utilizza un altro campo 
-ASID per distinguere quale processo ha effettuato l'accesso. Inoltre è possibile condividere una pagina, inserendo nella TLB lo stesso PFN per due VPN diverse. 
+ASID,``Address Space IDentifier'' per distinguere a quale spazio degli indirizzi si riferisce. Inoltre è possibile condividere una pagina, inserendo nella TLB lo 
+stesso PFN per due VPN diverse. In questo modo è possibile condividere memoria in modo semplice tra processi diversi, questo permette di diminuire la memoria 
+fisica totale necessaria. 
 
 Per sostituire gli elementi si possono utilizzare diverse politiche. La politica LRU, ``Least Recently Used'' impone che vengano scartati i dati meno recenti dalla 
 TLB. Per il principio di località temporale è più probabile che gli ultimi indirizzi visitati vengano visitati nuovamente. Nel caso in cui si vuole accedere ad una 
 sequenza di pagine di un'unità più grande del numero di slot disponibili nel LRU, si avrà solamente TLB miss, poiché si accede alle pagine non appena vengono rimosse. 
+Un'altra politica di sostituzione sceglie un elemento casualmente dalla TLB da sostituire, è migliore della LRU in quest'ultimo caso. 
 
 \subsubsection{Meccanismo di Swapping}
 
-Inizialmente lo spazio degli indirizzi doveva essere minore della memoria fisica disponile su una machina, ma questo non è sempre vero. Si può avere necessita di 
-inserire memoria in etani diversi spazi di indirizzi per ogni processo in esecuzione. 
+Inizialmente lo spazio degli indirizzi doveva essere minore della memoria fisica disponile su una machina, ma con il tempo si è avuta la necessità di memoria sempre 
+maggiore. Il sistema operativo ha la necessità di salvare porzioni dello spazio degli indirizzi che attualmente non sta utilizzando, per lasciare spazio libero ad 
+altri processi in esecuzione. Nei sistemi moderni questo ruolo è tipicamente riservato a dischi rigidi, che siano HDD o SSD, raramente si utilizzano altri 
+dispositivi di memoria secondaria. 
 
 %% TODO img gerarchia della memoria nei sistemi moderni
 
@@ -1777,20 +1795,75 @@ la possibilità di inserire pagine non utilizzate attualmente su memorie seconda
 Si può suddividere la memoria fisica in page frame, e si suddivide allo stesso modo nella memoria di massa, riservato per un utilizzo previsto per estendere la memoria 
 fisica appartenente al sistema. Questo spazio viene chiamato spazio di swap. 
 
+%% TODO img memoria fisica e secondaria divisione in page
 
 Si deve in qualche modo distinguere se una determinata pagina si trova nella memoria principale oppure in una memoria secondaria. Si può utilizzare un bit di 
 presenza, ed in base a questo valore si fornisce un interpretazione diverse al PFN, può indicare una pagina in memoria principale oppure un blocco in memoria secondaria. 
 
-Si parla di ``Page Fault'' quando un programma tenta di effettuare un accesso in una pagina che si trova in memoria secondaria. Quando accade il sistema operativo 
-deve portare questo dato in memoria principale. Se necessario bisogna modificare il PFN per indicare che si tratta di una pagina in memoria principale e non più di un blocco 
-in memoria secondaria. 
+Quando un processo tenta di accedere ad una zona di memoria, utilizza il VPN per cercare un'istanza all'interno della TLB. Se trova il PFN corrispondente può effettuare l'accesso 
+in memoria traducendo l'indirizzo. Altrimenti accede alla page table per ottenere il PTE ed il PFN, e si aggiorna la TLB. 
+Se il sistema operativo controlla il PTE può essere che la pagina non si trova in memoria principale. 
+Si parla di ``Page Fault'' quando un programma tenta di effettuare un accesso in una pagina che si trova in una memoria secondaria. Quando accade il sistema operativo 
+deve portare questo dato in memoria principale. Ed in caso bisogna modificare il PFN per indicare che si tratta di una pagina in memoria principale e non più di un blocco 
+in memoria secondaria. Questo controllo viene effettuato a livello hardware controllando il bit più alto. Se questo bit è uno, allora la pagina è presente in memoria, 
+altrimenti la pagina si trova in memoria secondaria, ed il resto del PTE indica un indirizzo in memoria secondaria. 
 
+Un possibile accesso in memoria con questa tecnica viene quindi implementato in maniera simile:
 
-%% TODO resto della lezione e programma mem.c, vmstat e top
+\begin{minted}{c}
+    VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+    (Success, TlbEntry) = TLB_Lookup(VPN)
+    if(Success == True){ // TLB hit
+        if(CanAccess(TlbEntry.ProtectionBit) == True){
+            offset = VirtualAddress & OFFSET_MASK
+            PhysAddr = (PTE.PFN << PFN_SHIFT) | offset
+            Register = AccessMemory(PhysAddr)
+        }else RaiseException(PROTECTION_FAULT)
+    }else{              // TLB miss
+        PTEAddr = PTBR + (VPN * sizeof(PTE))
+        PTE = AccessMemory(PTEAddr)
+
+        if (PTE.Valid == False)
+            RaiseException(SEGMENTATION_FAULT)
+        else {
+            if (CanAccess(PTE.ProtectBits) == False)    
+                RaiseException(PROTECTION_FAULT)
+            else if (PTE.Present == True){
+                TLB_Insert(VPN, PTE.PFN, PTE.ProtectBit)
+                RetryInstruction()
+            }else if (PTE.Present == False){
+                RaiseException(PAGE_FAULT)
+                RetryInstruction()
+            }
+        }
+    }   
+\end{minted}
+
+Il sistema operativo deve decidere quando effettuare scambi tra porzioni di memoria fisica e memoria secondaria, deve quindi impostare una soglia limite di utilizzo 
+della memoria principale, oltre la quale dovrà spostare pagine in memoria secondaria per continuare ad allocare nuova memoria. Lo ``Swap Daemon'' che effettua questo 
+operazione ha due limiti: HW, ``High Watermark'', e LW, ``Low Watermark''. Quando il numero di pagine libere supera il LW allora si utilizza la memoria secondaria, 
+se almeno fino a quando il numero di pagine libere non ritorna superiore a HW. 
+
+Su macchine Linux si utilizza il comando \verb|vmstat| per ottenere informazioni sul sistema in una certa unità di tempo. Offre informazioni in più 
+colonne, suddivisi in pià colonne. Le colonne relative alla memoria contengono la memoria spostata dal sistema operativo nella memoria secondaria in \verb|swpd|, la memoria principale 
+disponibile in \verb|free|. Sotto la sezione \verb|swap| si hanno due colonne \verb|si| e \verb|so| per indicare ``Swap In'' e ``Swap Out'', la memoria spostata in memoria 
+principale ed in memoria secondaria. Analogamente la sezione \verb|io| individua la memoria in entrata ed in uscita da sistemi e periferiche di I/O \verb|bi| e \verb|bo|. 
+Queste notazioni di memoria rappresentano MB di memoria. Seguono le sezioni \verb|system| e \verb|cpu|. La prima individua in \verb|in| il numero di interrupt 
+effettuati e la seconda \verb|cs| il numero di context switch effettuati. Nella seconda sezione la colonna \verb|us| individua la percentuale di tempo impiegata 
+in user mode, \verb|sy| individua la percentuale di tempo utilizzata dal sistema operativo, \verb|id| il tempo in cui il processore era ``idle'', non eseguiva alcuna 
+operazione, e \verb|wa| il tempo in cui il processore era in stato di wait. 
+Si utilizzano e flag \verb|vmstat -S M 1| per indicare di aggiornare questi dati ogni secondo. Il comando \verb|top| fornisce le stesse informazioni sull'utilizzo in 
+percentuale della CPU, ma fornisce per ogni processo la memoria utilizzata, la memoria occupata in memoria principale e secondaria, e quindi la memoria spostata 
+in memoria di massa. Inoltre mostra la priorità ed il valore di niceness dei processi. 
+
+%% TODO resto della lezione e programma mem.c
+
+Se un programma effettua spesso accessi in memoria secondaria, questo può rallentare il sistema, poiché essendo più lento l'accesso dovrà aspettare e una parte maggiore 
+del processore sarà in stato di wait. Se queste operazioni occorrono molto spesso, potrebbero ritardare l'esecuzione di programmi interattivi. 
 
 Se termina la memoria disponibile, il sistema operativo comincia ad uccidere processi, può essere il processo che sta occupando la memoria, oppure 
-altri processi che occupano meno memoria. Ma il sistema operativo non può uccidere sé stesso, ma è possibile che la terminazione di alcuni processi 
-possa generare instabilità nel sistema. 
+altri processi che occupano meno memoria. Il sistema operativo non può uccidere sé stesso, ma è possibile che la terminazione di alcuni processi 
+possa generare instabilità nel sistema. Per esempio potrebbe terminare il processo per l'interfaccia grafica o altre processi necessari all'utilizzo del calcolatore. 
 
 \clearpage
 
