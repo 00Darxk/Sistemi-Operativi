@@ -41,7 +41,7 @@
 }
 \fancypagestyle{link}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{Sorgente del file LaTeX disponibile al seguente link: \url{https://github.com/00Darxk/Sistemi-Operativi}}}
 
-\begin{document}    
+\begin{document}
 
 \title{%
     \textbf{Sistemi Operativi}  \\ 
@@ -1865,6 +1865,166 @@ Se termina la memoria disponibile, il sistema operativo comincia ad uccidere pro
 altri processi che occupano meno memoria. Il sistema operativo non può uccidere sé stesso, ma è possibile che la terminazione di alcuni processi 
 possa generare instabilità nel sistema. Per esempio potrebbe terminare il processo per l'interfaccia grafica o altre processi necessari all'utilizzo del calcolatore. 
 
+\subsection{Implementazione di \texttt{malloc()} e \texttt{free()}: \texttt{my\_alloc()} e \texttt{my\_free()}}
+
+%% TODO rec 25/11/24
+
 \clearpage
+
+\section{Programmazione Concorrente}
+
+Nei sistemi operativi si parla sempre di programmazione concorrente, poiché il sistema operativo deve gestire un numero molto elevato di interrupt ed operazioni al secondo, 
+dove molte strutture dati in memoria devono essere accedute in modo concorrente per poter effettuare le adeguate operazioni. 
+
+Si introduce un nuovo tipo di astrazione tramite i ``thread''. Questo tipo di programmazione è simile alla programmazione multi-processo utilizzando la chiamata di 
+sistema \verb|fork()|. Questi due tipi di programmazione concorrente sono diversi tipi di effettuare operazioni in parallelo. Se un processo non viene eseguito in 
+modo concorrente in ogni istante di tempo una singola operazione viene eseguita, con un singolo program counter per l'avanzamento dell'esecuzione. Un thread rappresenta 
+un percorso di esecuzione che possono rappresentare più program counter, quindi potenzialmente si possono avere più istruzioni in esecuzione in simultanea. 
+A differenza della programmazione multi-processo, tutti i thread si appoggiano sullo stesso spazio degli indirizzi, quindi è molto più semplice condividere informazioni 
+tra i vari thread. Avviene un context switch ridotto per passare tra i vari thread. Si tratta di un context snitch leggero poiché non è necessario cambiare la pagina 
+in cui ci si trova, dato che è lo stesso spazio degli indirizzi. 
+
+I thread hanno bisogno di uno spazio all'interno dello stack per mantenere i loro valori, quindi sono presenti tanti stack quanti sono i thread in esecuzione in un dato 
+processo. 
+Questo sistema aggiunge notevole complessità al processo ma permette di migliorare notevolmente le prestazioni, effettuando operazioni in parallelo. 
+
+%% TODO why use threads
+
+La libreria più utilizzata per la programmazione concorrente in C è \verb|pthread.h|. 
+
+%% TODO codice 
+
+La funzione \verb|pthread_join()| è l'equivalente della chiama \verb|wait()|, infatti il thread che effettua la chiamata aspetta la terminazione del thread su 
+cui è stata chiamata la funzione. 
+
+%% TODO
+
+\subsection{Esercizi}
+
+%% TODO rec ?, file esercizi separati
+
+Se un problema è parallelizzabile, dove è presente un'architettura multicore o multiprocessore, allora è possibile rendere più veloce 
+l'esecuzione del programma. 
+
+Per in-strumentare ed ottenere parametri dell'esecuzione si può utilizzare la funzione \verb|gettimeofday()|, più precisa rispetto alla funzione \verb|time()|, 
+che restituisce il valore in una variabile di tipo \verb|time_val|. Restituisce il time stamp della chiamata ed una porzione relativa ai microsecondi. 
+
+%% time_taken = end.t_sec - start.t_sec
+
+Si considera un programma in grado di effettuare la moltiplicazione tra due matrici riempite di interi casuali. Per svolgere questo programma sfruttando la 
+programmazione concorrente, si utilizzano un certo numero di thread assegnati ad un certo numero di righe della matrice. Ci si aspetta che il tempo di esecuzione 
+di questo programma sia velocizzato di un fattore pari al numero di thread, ma essendo presenti molti overhead in questo programma, ed in generale nell'esecuzione di 
+un qualsiasi programma parallelizzabile, non è possibile raggiungere questo incremento ideale. 
+
+%% TODO add stato "zombie" processi che non sono raggiungibili, non in condizione di raggiungere segnali 
+
+Essendo eseguito all'interno di un container docker, il risultato di questa esecuzione dipende dalla configurazione 
+
+
+Nella Home directory è presente un file chiamato \verb|.wslconfig| che specifica le risorse da assegnare, contiene un nome che indica la configurazione tra 
+parentesi quadre, e due parametri \verb|memory| e \verb|processors|, questi se sono commentati indicano il valore di default. Se non è presente è possibile 
+crearlo con il nome della configurazione \verb|[wsl2]|. In versioni successive di docker è possibile modificare questi valori con un'interfaccia grafica 
+tra le impostazioni di docker. 
+Per aggiornare questi valori bisogna terminare il container ed eseguire il comando \verb|wsl --shutdown| per riavviare l'engine wsl con le relative configurazioni. 
+Il tempo di esecuzione diminuendo il numero di core disponibili è migliore rispetto al programma non parallelizzato, ma decisamente peggiore rispetto alla configurazione 
+con più core. Se si modifica il codice del programma per rendere il numero di thread pari al numero di core disponibili allora è possibile aumentare leggermente il 
+tempo di esecuzione. 
+
+In applicazioni di cloud computing, dove sono presenti un numero molto elevato di core, generalmente le macchine virtuali disponibili utilizzano un numero di core maggiore 
+di una divisione equa, poiché è improbabile che tutte le macchine virtuali utilizzino allo stesso tempo tutti i core presenti. Questo meccanismo di oversharing permette 
+di aumentare le prestazioni 
+
+\subsubsection*{ex}
+
+Un'architettura software è generalmente costituita da un agente produttore che realizza un certo tipo di informazione ed un consumatore che utilizza quest'informazione. 
+Condividono una qualche struttura dati per condividere quest'informazione, accessibile ad entrambi gli agenti. Questo rappresenta un problema di sincronizzazione tra 
+i due agenti. 
+
+Una pila di 10 elementi interi è condivisa tra due thread: un produttore ed un consumatore
+
+\begin{enumerate}
+    \item Il produttore deve essere implementato secondo la seguente logica. In un ciclo infinito:
+    \begin{itemize}
+        \item Deve attendere una quantità di tempo casuale inferiore al secondo;
+        \item Una volta scaduta l'attesa, se la pila è piena, deve attendere che qualche elemento venga rimosso dal consumatore;
+        \item Quando si libera dello spazio nello stack, deve inserire un numero casuale di elementi (senza andare in overflow).
+    \end{itemize}
+    \item Il consumatore deve essere implementato secondo la seguente logica. In un ciclo infinito:
+\end{enumerate}
+Deve attendere una quantità di tempo casuale inferiore al secondo
+Una volta scaduta l'attesa, se lo stack è vuoto, deve attendere che qualche elemento venga inserito dal produttore
+Quando lo stack non è vuoto, deve leggere un numero casuale di elementi, inferiore o uguale al numero di elementi presenti nello stack.
+Suggerimenti:
+\begin{itemize}
+    \item Lo stack può essere implementato con un array di interi, un contatore di elementi già inseriti, e con due funzioni: push() e pop()
+    \item Alcune funzioni utili: random() e usleep();  
+\end{itemize}
+
+Si realizza una struttura dato chiamata \verb|stack| che rappresenta la pila, 
+contenente un array di interi, un intero che indica la dimensione complessiva, ed un 
+ulteriore intero che specifica il numero di posizioni occupate nella pila. 
+
+%% TODO descrizione pop e push
+
+A differenza della funzione \verb|malloc()|, la funzione \verb|calloc()| inizializza 
+tutti i valori della zona di memoria allocata a zero. Si realizza una variabile globale 
+pila, poiché è l'unica struttura dati utilizzata nel problema. Le funzioni di pop e 
+push incluse sono semplificate, si utilizza il valore -1 di default per indicare 
+che l'operazione di pop è stat eseguita su di una pila vuota, anche se questa dovrebbe 
+poter gestire interi negativi. 
+
+Per poter gestire questi due agenti, bisogna creare due thread, assegnati a due funzioni 
+diverse, una consumatore ed un'altra produttore. Per cui queste due funzioni devono 
+restituire una variabile di tipo puntatore a void, ed accettano un argomento 
+di tipo puntatore a void. 
+Si potrebbe realizzare anche con una fork, ma lo spazio di memoria non sarebbe 
+condiviso e quindi il problema sarebbe più difficile, poiché ogni inserimento 
+o rimozione deve essere effettuato su una terza zona di memoria condivisa 
+oppure su di un file. La programmazione multi-processo è quindi 
+tendenzialmente più difficile di una programmazione multithread, poiché sono 
+necessarie più funzioni del sistema operativo per realizzare le stesse 
+operazioni. 
+
+Il produttore itera su un ciclo infinito ed aspetta un intervallo di tempo 
+casuale, fornito da \verb|usleep()| passando come argomento un intero 
+casuale fino a $10^6$, poiché l'unità di misura è in microsecondi. 
+Bisogna effettuare un cast di \verb|1e6|, poiché è di tipo \verb|double| e non 
+è compatibile con l'operatore modulo. Bisogna stabilire 
+quanti elementi da inserire in pila, devono essere in numero inferiore o uguale 
+al numero di posizioni disponibili. Dato questo numero si 
+itera e si inseriscono dei numeri casuali invocando la funzione \verb|push()|. 
+Bisogna inserire un controllo, per verificare se il consumatore deve consumare 
+elementi dalla pila. Per impedire di ripetere continuamente questo ciclo 
+su una pila piena, si attende fino a quando non si libera dello spazio, 
+con un'istruzione condizionale. 
+Il consumatore si implementa analogamente, con un ciclo infinito, che 
+attende per un tempo casuale, e legge nella pila solamente se non è vuota. 
+
+Si inseriscono inoltre delle stampe per indicare le operazioni eseguite 
+da questi due agenti. 
+
+Si inizializza la pila e si definiscono le due variabili contenenti 
+i thread. 
+Per implementare queste queste due funzioni come due thread si creano 
+con la funzione \texttt|pthread\_create()|. Non bisogna specificare né il 
+secondo né il quarto parametro di questa funzione, poiché non si sono 
+opzioni da specificare o il numero di worker. Come primo parametro si 
+inserisce il puntatore al thread, e come terzo la funzione da eseguire. 
+
+A questo punto l'esecuzione di questo programma non produce nulla, poiché il thread 
+principale termina prima dell'esecuzione di questi due thread, terminando 
+anche loro. 
+Il thread principale deve attendere la terminazione dei figli, ma questi 
+eseguono un ciclo infinito quindi non finiranno mai, bisogna essere 
+consapevoli di questo, poiché il programma deve essere terminato con la 
+sequenza ``Ctrl + C''. Si utilizza la funzione \verb|pthread_join()|, 
+specificando come primo parametro i thread di cui bisogna aspettare l'esecuzione 
+ed un parametro nullo. Questi due thread possono accedere alla stessa area di memoria 
+contemporaneamente e quindi bisogna inserire un lock per impedire che 
+tentino di effettuare contemporaneamente operazioni sulla pila. 
+
+Per inserire questo lock si utilizzano due funzioni \verb|pthread_mutex_lock()| 
+e \verb|pthread_mutex_unlock()|, passando come argomento la struttura dati 
+che si vuole bloccare. 
 
 \end{document}
