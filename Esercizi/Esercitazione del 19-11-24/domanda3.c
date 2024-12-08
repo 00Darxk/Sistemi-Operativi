@@ -3,6 +3,13 @@
 #include <time.h>
 #include <string.h>
 
+// Esercizio 3: Manipolazione della memoria:
+/**
+ * Scrivi un programma che alloca memoria per un array di interi, usa 
+ * memset per impostare tutti gli elementi a zero, quindi usa memcpy per 
+ * copiare il contenuto di un altro array nella memoria appena allocata. 
+ */
+
 void printArray(int* a, int dim){
 	for(int i = 0; i < dim; i++){
 		if(i == 0) printf("[%d, ", a[i]);

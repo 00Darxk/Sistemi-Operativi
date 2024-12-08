@@ -2,6 +2,13 @@
 #include <time.h>
 #include <stdlib.h>
 
+// Esercizio 1: Allocazione di memoria dinamica
+/**
+ * Scrivi un programma che crea un array dinamico di numeri interi di dimensione specificata dall'utente, 
+ * riempie l'array con numeri casuali e stampa l'array. Assicurati di liberare la memoria allocata alla 
+ * fine del programma.
+ */
+
 int main(){
 	srand(time(NULL));
 	int x = 0;

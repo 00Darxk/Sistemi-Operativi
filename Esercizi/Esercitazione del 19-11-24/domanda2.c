@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Esercizio 2: Gestione di vettori dinamici:
+/**
+ * Implementa una struttura dati per un vettore dinamico di interi. Includi funzioni per aggiungere un 
+ * elemento, rimuovere un elemento e stampare tutti gli elementi del vettore. Assicurati che il vettore 
+ * aumenti la sua capacità quando necessario.
+ */
+
 typedef struct vettore{
 	int* v;
 	int l;

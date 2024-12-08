@@ -1,0 +1,447 @@
+\documentclass{article}
+
+\usepackage{cancel}
+\usepackage{amsmath}
+\usepackage[includehead,nomarginpar]{geometry}
+\usepackage{graphicx}
+\usepackage{amsfonts} 
+\usepackage{verbatim}
+\usepackage{mathrsfs}  
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{braket}
+\usepackage{bookmark}
+\usepackage{fancyhdr}
+\usepackage{romanbarpagenumber}
+\usepackage{minted}
+%\usepackage{subfig}
+\usepackage[italian]{babel}
+%\usepackage{float}
+%\usepackage{wrapfig}
+%\usepackage[export]{adjustbox}
+\allowdisplaybreaks
+
+\setlength{\headheight}{12.0pt}
+\addtolength{\topmargin}{-12.0pt}
+\graphicspath{ {./Immagini/} }
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+}
+
+\newsavebox{\tempbox} %{\raisebox{\dimexpr.5\ht\tempbox-.5\height\relax}}
+
+\makeatother
+
+\numberwithin{equation}{subsection}
+\newcommand{\tageq}{\tag{\stepcounter{equation}\theequation}}
+\AtBeginDocument{%
+  \renewcommand{\figurename}{Fig.}
+}
+\fancypagestyle{link}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{Sorgente del file LaTeX disponibile al seguente link: \url{https://github.com/00Darxk/Sistemi-Operativi}}}
+
+\begin{document}
+
+\title{%
+    \textbf{Sistemi Operativi}  \\ 
+    \large Esercizi Svolti di Sistemi Operativi \\
+    \textit{Anno Accademico: 2024/25}}
+\author{\textit{Giacomo Sturm}}
+\date{\textit{Dipartimento di Ingegneria Civile, Informatica e delle Tecnologie Aeronautiche \\
+Università degli Studi ``Roma Tre"}}
+
+\maketitle
+\thispagestyle{link}
+
+\clearpage
+
+
+\pagestyle{fancy}
+\fancyhead{}\fancyfoot{}
+\fancyhead[C]{\textit{Sistemi Operativi - Università degli Studi ``Roma Tre"}}
+\fancyfoot[C]{\thepage}
+\pagenumbering{Roman}
+
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+
+%% TODO add ref ostep-homework per generare gli homework del corso
+
+%% TODO add restanti esercizi
+
+
+\section{Esercizi sulla Traduzione di Indirizzi}
+
+Dato un sistema con uno spazio fisico di 32K ed uno spazio degli indirizzi di 16K e pagine di dimensione 4K. Con PTE eventi il bit più significativo, il più a sinistra, 
+è il bit di validità, se è 1 la traduzione è valida, altrimenti se è 0 non è valida:
+\begin{itemize}
+    \item \verb|0|: \verb|0x8000000c|;
+    \item \verb|1|: \verb|0x00000000|;
+    \item \verb|2|: \verb|0x00000000|;
+    \item \verb|3|: \verb|0x80000006|.
+\end{itemize}
+
+Determinare l'indirizzo fisico dei seguenti indirizzi virtuali oppure specificare se sono invalidi:
+\begin{itemize}
+    \item \verb|0x00003229| (\verb|12841|);
+    \item \verb|0x00001369| (\verb|4969|);
+    \item \verb|0x00001e80| (\verb|7808|);
+    \item \verb|0x00002556| (\verb|9558|);
+    \item \verb|0x00003a1e| (\verb|14878|).
+\end{itemize}
+
+Per semplificare la procedura per determinare il valore dei bit più significativi, si vuole sapere in quale pagina è presente l'indirizzo, quindi è sufficiente determinare 
+il quoziente tra l'indirizzo virtuale e la dimensione della pagina:
+\begin{gather*}
+    \mathrm{VPN}:\left\lfloor\displaystyle\frac{12841}{4098}\right\rfloor=3
+\end{gather*}
+L'offset si calcola come la posizione nella pagina di questo indirizzo calcolata come:
+\begin{equation*}
+    \mathrm{Offset}:12831-3*4096=553
+\end{equation*}
+Il PFN corrispondente è \verb|80000006|, è valido avendo il bit più significativo pari ad uno, ed ha un indirizzo fisico 6. Per cui l'indirizzo fisico corrispondente è:
+\begin{equation}
+    6*4096+553=25129
+\end{equation}
+
+Il secondo indirizzo $4969$ si riferisce al secondo PFN, dato che $\lfloor4969/4096\rfloor=1$. Ma questa pagina ha il bit più significativo pari a zero, quindi la traduzione 
+non è valida. Allo stesso modo per l'indirizzo $7808$. L'indirizzo $9558$ si riferisce alla seconda terza pagina, anch'essa si riferisce ad un indirizzo fisico con 
+il bit più significativo pari a zero, quindi neanche questa traduzione è valida. 
+
+L'ultimo indirizzo appartiene alla quarta VPN: 
+
+\begin{gather*}
+    \mathrm{VPN}:\left\lfloor\displaystyle\frac{14878}{4096}\right\rfloor=3\\
+    14878-4096*3=2590\\
+    6*4096+2590=27166\theequation
+\end{gather*}
+
+
+\section{Esercitazione del 29 Ottobre: Programmazione Multiprocesso}
+
+\subsection{Esercizio 1}
+\subsection{Esercizio 2}
+\subsection{Esercizio 3}
+\subsection{Esercizio 5}
+\subsection{Esercizio 6}
+\subsection{Esercizio 7}
+
+\clearpage
+
+\section{Esercitazione del 19 Novembre: Gestione della Memoria}
+
+\subsection{Esercizio 1}
+\subsection{Esercizio 2}
+\subsection{Esercizio 3}
+\subsection{Esercizio 4: Implementazione di \texttt{my\_alloc()} e \texttt{my\_free()}}
+
+In questo esercizio bisogna implementare il comportamento delle funzioni \verb|malloc()| e \verb|free()|, 
+senza utilizzare queste due funzioni. Bisogna creare due funzioni una che dato un intero che indica il numero di byte 
+da allocare, restituisce un puntatore di tipo \verb|void*| all'inizio della zona di memoria di dimensione passata. Ed un'altra funzione 
+che prende un puntatore di tipo \verb|void*| ad una zona di memoria allocata e la libera. 
+
+Quindi l'argomento della funzione \verb|my_alloc()| è il numero di byte della zona di memoria, di tipo \verb|size_t|, e 
+restituisce un puntatore generico poiché non conosce il tipo di dati che sarà contenuto in questa 
+zona di memoria. La funzione \verb|my_free()| dovrebbe prendere un puntatore ad un'area di memoria 
+generica e restituisce un valore che indica se questa operazione è andata a buon fine o meno. 
+
+Per implementare queste due funzioni si possono utilizzare una singola volta le funzioni \verb|mmap()| 
+e \verb|munmap()|, durante l'esecuzione del programma. 
+La prima funzione può essere utilizzata in due modi diversi, simulando il comportamento della malloc, 
+poiché prende un numero di argomenti maggiore, permettendo comportamenti dati di default 
+dalla malloc. Si possono definire i permessi dell'area di memoria da allocare, se è di sola 
+lettura o scrittura, specificare se alcuni byte di quest'area possono essere eseguiti o indicare 
+se questa zona può essere condivisa. \`{E} una funzione di più basso livello, con pià casi 
+d'uso rispetto alla malloc, e si utilizza invece della malloc quando sono necessarie esigenze 
+particolari. Un altro caso permette di creare una mappa con nome, un riferimento in memoria rispetto 
+ad una file che si trova nel filesystem. Permette di semplificare il processo di interazione con 
+un file nel filesystem, riservando un'area di memoria di dimensione pari a quella di questo file, con un certo offset opzionale. Si accede a questo file con la notazione array sulla zona di memoria che mappa il file. 
+
+Se c'è una connessone diretta tra questa zona di memoria ed il file su disco, in base alle opzioni 
+della funzione, è possibile modificare anche il file su disco. Questo tuttavia ha un costo 
+sull'utilizzo della memoria, che potrebbe impedire il suo utilizzo, in caso la memoria virtuale 
+necessaria è minore del file che si vuole mappare. Inoltre in base al file si potrebbe voler 
+modificare o leggere una piccola porzione del file, quindi invece di effettuare una mappatura 
+completa, è conveniente accedere normalmente al file senza trasferirlo in memoria. 
+Si potrebbe creare mappe anonime, che non hanno un file corrispettivo nel filesystem, questo 
+corrisponde all'esecuzione di una \verb|malloc()|, poiché non ha di default un file.  
+La \verb|munmap()| è la controparte di questa funzione, permette di liberare un'area di memoria 
+allocata utilizzando la funzione \verb|mmap()|. 
+
+Accedendo alle pagine di manuale corrispondenti tramite il comando:
+\begin{minted}{powershell}
+corso@sistemi-operativi:~$ man map
+\end{minted}
+%$
+
+Queste funzioni sono incluse nell'header \verb|sys/mman.h|. Il primo argomento della funzione è 
+l'indirizzo di memoria che si vorrebbe avere come l'indirizzo di partenza della memoria 
+allocata. Questa è un'opzione molto sofisticata, non necessaria per applicazioni così semplici, 
+quindi si può inserire il valore \verb|NULL| per specificare che l'indirizzo di partenza della memoria non 
+è rilevante, quindi è il kernel a scegliere automaticamente l'indirizzo, in modo che sia 
+allineato con una pagina, ovvero ha un offset nullo per una pagina di memoria. 
+Questo rappresenta solo un suggerimento, la funzione potrebbe non accettarlo e quindi dovrebbe 
+sceglierlo il kernel nel modo precedentemente descritto. 
+
+Un altro parametro di tipo \verb|site_t| specifica il numero di byte di questa zona di memoria da 
+allocare. Altri due parametri chiamati \verb|prot| e \verb|flags| di tipo intero specificano 
+opzioni di accesso e flag aggiuntive per l'operazione. Un altro parametro \verb|fd|, chiamato 
+come un file descriptor, sempre di tipo intero, rappresenta il file che si vuole inserire in questa zona di memoria. Infine si può inserire un offset, per portare in memoria solamente una 
+porzione del file, di tipo \verb|off_t|. 
+
+Per i parametri \verb|prot| si possono utilizzare diverse opzioni per 
+specificare che le pagine possono essere eseguite, lette, scritte, oppure non sono 
+accessibili:
+\begin{itemize}
+    \item \verb|PROT_EXEC|: Permette la sua esecuzione;
+    \item \verb|PROT_READ|: Permette l'accesso in lettura;
+    \item \verb|PROT_WRITE|: Permette l'accesso in scrittura;
+    \item \verb|PROT_NONE|: Non permette nessuna della precedenti. 
+\end{itemize}
+Queste operazioni possono essere messe in or per utilizzare più opzioni 
+contemporaneamente. Per il parametro \verb|flags| sono possibili molte opzioni, le 
+più interessanti per questo caso sono le opzioni per condividere la mappa ad altri processi, oppure per renderla privata ad un singolo processo:
+\begin{itemize}
+    \item \verb|MAP_PUBLIC|: La mappatura è accessibile da altri processi;
+    \item \verb|MAP_PRIVATE|: La mappatura non è accessibile ad altri processi;
+    \item \verb|MAP_ANONYMOUS|: La mappatura non richiede un file.
+\end{itemize} 
+Se si utilizza le opzioni \verb|prot| per scrivere e leggere, e si indica con il parametro \verb|flags| che si tratta di una mappa privata, il comportamento di questa funzione è analogo al 
+comportamento di una \verb|malloc()|. 
+Si utilizza un'ulteriore flag per indicare che si vuole creare una mappa anonima, senza 
+specificare il file descriptor per il file su cui si vuole operare. Con questa flag il parametro 
+\verb|fd| viene ignorato, e convenzionalmente viene inserito il valore -1. 
+Queste funzioni appartengono allo standard POSIX, su molti sistemi operativi basati sul kernel Linux, e sono in accordo rispetto a delle interfacce e prototipi di funzioni, che possono 
+avere implementazioni anche molto differenti l'una con l'altra. Quindi in alcune implementazioni, è richiesto che \verb|fd| sia uguale a -1. Dato che l'offset non viene utilizzato si pone pari a zero. La chiamata alla funzione \verb|mmap()| è quindi:
+\inputminted[firstline=32,lastline=33]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+Per la \verb|munmap()| si hanno due argomenti, l'indirizzo di base della mappa che si vuole 
+rimuovere, e come secondo argomento si prende la dimensione della zona di memoria da liberare. La funzione \verb|free()| non ha bisogno di questo parametro, ma identifica automaticamente la 
+dimensione della zona di memoria. Non appare a questo livello l'informazione necessaria per liberare l'area di memoria. 
+Ciò avviene poiché alla chiamata di una \verb|malloc()|, poco prima dell'indirizzo restituito 
+inserisce dei metadati relativi alla memoria che ha allocato, come la sua dimensione in byte. 
+Questa dimensione viene letta ad un'eventuale \verb|free()| ed è quindi in grado di liberare 
+esattamente la memoria precedentemente allocata. 
+
+Per utilizzare una singola volta nell'intero programma queste due funzioni, un possibile approccio consiste nel realizzare una prima chiamata alla \verb|mmap()| generando una grande 
+area di memoria, utilizzabile poi nel resto del programma. Inserendo direttamente la \verb|mmap()| dentro la \verb|my_alloc()| comporterebbe multiple chiamata alla \verb|mmap()|, ogni volte 
+che viene effettuata una nuova allocazione. Questo essenzialmente aggira il problema, come se 
+fosse inserita una \verb|malloc()| all'interno della funzione \verb|my_alloc()|. 
+
+
+Si utilizza una funzione per allocare questa zona di memoria. Su questa zona per allocare 
+una porzione di memoria, in modo che la \verb|my_free()| sia in grado di liberarla, bisogna 
+implementare un meccanismo analogo alla \verb|free()|, inserendo un header per salvare metadati 
+relativi alla memoria richiesta. Si realizza una struttura dati di tipo \verb|block| contenente la dimensione del blocco di memoria che segue il metadato, una variabile che 
+indica se il blocco è libero ed il suo successivo blocco di memoria:
+\inputminted[firstline=21,lastline=26]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+Inizialmente questa zona di memoria rappresenta un intero blocco, contenente nei primi 16 byte un puntatore al relativo \verb|block| contenente i metadati. 
+%% TODO img zona di memoria allocata
+Quando si effettua una chiamata alla \verb|my_alloc()| di dimensione minore della memoria 
+allocata, ma abbastanza grande da impedire la creazione di un altro blocco di memoria, poiché sono richiesti almeno 16 byte per memorizzare solamente i metadati in \verb|block*|. L'indirizzo restituito dalla \verb|my_alloc()| è la posizione iniziale sommata ai 16 byte dei metadati. 
+%% TODO img zona di memoria completamente occupata (rimanenti < 16)
+La funzione \verb|my_free()| prende un indirizzo base, torna indietro di 16 byte, e legge il 
+blocco dei metadati, impostando ad uno il parametro \verb|free| della struttura, in modo che sia 
+di nuovo utilizzabile. 
+
+Se si effettua un'allocazione di dimensione più piccola, allora è possibile realizzare un nuovo 
+blocco di questa memoria creando un nuovo \verb|block|, contenuto subito la zona più piccola 
+allocata. In questo modo si divide il blocco iniziale in due, dove il primo avrà come metadato \verb|size| la dimensione attuale e come parametro \verb|next| l'indirizzo del successivo blocco. Questo blocco successivo avrà come metadato \verb|size| la dimensione rimanente della 
+memoria allocata libera. 
+%% TODO img zona di memoria divisa in blocchi, uno occupato
+Ma quando viene liberato il primo blocco di memoria, saranno presenti due blocchi di memoria 
+entrambi liberi, che dividono lo spazio totale. Questo può impedire allocazioni più grandi della 
+dimensione di questi blocchi, nonostante complessivamente lo spazio totale possa contenerle. 
+
+Questo rappresenta il memoria della frammentazione interna, per risolverlo al completamento di 
+una \verb|my_free()| bisogna provare ad effettuare un unione tra blocchi liberi adiacenti, controllando dal blocco successivo nel parametro \verb|next| dei metadati, se anch'esso è libero. Continuando nei blocchi successivi fino a quando non si incontra un blocco occupato. 
+
+Nonostante questo è possibile una frammentazione dove due blocchi di memoria libera sono divisi 
+da un blocco occupato. 
+%% TODO img zona di memoria tre blocchi iniziale e finale liberi, in mezzo occupato
+
+Bisogna effettuare un'operazione di deframmentazione spostando i blocchi nella zona, ma in questo 
+scenario non è possibile effettuarlo poiché non si sta programmando a livello del kernel, quindi 
+l'effetto sarà non trasparente al livello del programmatore. Dopo aver spostato un blocco 
+ed unito i due liberi, l'indirizzo di memoria del blocco occupato cambia, e non sarà più possibile 
+accedervi tramite l'indirizzo fornito dalla precedente chiamata alla \verb|my_alloc()|. All'interno del sistema operativo sarebbe sufficiente modificare le istanze della page table per 
+rendere questo cambiamento invisibile al programmatore, mantenendo la funzionalità dell'indirizzo 
+fornito dalla \verb|my_alloc()|. 
+
+
+All'inizio del programma si definiscono due macro, una per la dimensione della memoria, e la seguente per la dimensione minima di un blocco: 
+\inputminted[firstline=7,lastline=8]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+Si inizializzano due variabili puntatore a blocco per lo spazio di memoria e per la lista 
+dei blocchi liberi:
+\inputminted[firstline=27,lastline=28]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+La prima funzione inizializza lo spazio di memoria, chiamando un'unica volta nell'intero programma la funzione \verb|mmap()|, controllando se ha fallito l'esecuzione ed inizializzando 
+i valori dei metadati che si sta creando. 
+\inputminted[firstline=30,lastline=44]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+Si definisce in seguito l'operazione per suddividere dei blocchi, dato un riferimento ad un blocco \verb|block| e la dimensione della memoria occupata nel blocco \verb|size|, inserendo in coda il nuovo blocco.  
+Il puntatore di base del nuovo blocco si ottiene dall'indirizzo del blocco, sommando la dimensione della memoria da occupare passata come parametro \verb|size| e la dimensione del blocco. La dimensione di questo nuovo blocco è la dimensione rimasta, dopo aver rimosso dalla dimensione corrente del blocco la dimensione dei dati che si sta inserendo \verb|size| e la dimensione del blocco. Lo stato di questo nuovo blocco è libero ed ha come successivo, il blocco 
+successivo del corrente. Si aggiornano in fine i metadati del blocco passato, inserendo come successivo questo nuovo blocco. 
+\inputminted[firstline=47,lastline=56]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+
+Un'ulteriore funzione stampa il layout della memoria in un dato momento, ogni volta che viene 
+chiamata un'allocazione o de-allocazione. 
+
+Segue la definizione della \verb|my_alloc()|, rifiuta richieste di allocazioni dove la dimensione passata è minore o uguale a zero, poiché si tratta di una richiesta sbagliata. In seguito chiama \verb|init_memory_pool()|, per creare se non è mai stata creata la zona di memoria. 
+In seguito scorre la \verb|free_list| cercando un blocco libero, di dimensione maggiore della richiesta. Se viene trovato, si controlla se è possibile frammentarlo, ed in caso viene chiamata la \verb|split_blocks()|, altrimenti semplicemente si assegna il blocco corrente come occupato. 
+In seguito viene restituito l'indirizzo di partenza della memoria allocata, aggiungendo la dimensione del blocco all'indirizzo del blocco corrente. 
+Se non viene individuato alcun blocco viene restituito \verb|NULL|, poiché si è esaurita la memoria di dimensione maggiore della dimensione specificata. 
+\inputminted[firstline=70,lastline=89]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+In seguito si definisce la funzione per unire tra loro due blocchi, quando si trovano due nodi 
+liberi adiacenti, scorrendo la lista. 
+\inputminted[firstline=91,lastline=96]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+Quest'implementazione permette l'unione di blocchi adiacenti, controllando solamente a destra, se fossero presenti dei blocchi liberi alla sinistra, non verrebbero uniti tra di loro. 
+
+
+Per realizzare la \verb|my_free()| si passa un puntatore, e si ottiene l'indirizzo al blocco corrispondente, sottraendo la dimensione di un blocco. Si aggiornano i suoi metadati e si tenta di unire blocchi liberi, chiamando la \verb|merge_blocks()| sul blocco corrente:
+\inputminted[firstline=98,lastline=107]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+Si definisce infine la funzione per liberare la memoria al termine del programma:
+\inputminted[firstline=109,lastline=116]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+
+\clearpage
+
+\section{Esercizi su Programmazione Concorrente}
+
+%% TODO rec 2/12/24, file esercizi separati
+
+Se un problema è parallelizzabile, dove è presente un'architettura multicore o multiprocessore, allora è possibile rendere più veloce 
+l'esecuzione del programma. 
+
+Per in-strumentare ed ottenere parametri dell'esecuzione si può utilizzare la funzione \verb|gettimeofday()|, più precisa rispetto alla funzione \verb|time()|, 
+che restituisce il valore in una variabile di tipo \verb|time_val|. Restituisce il time stamp della chiamata ed una porzione relativa ai microsecondi. 
+
+%% time_taken = end.t_sec - start.t_sec
+
+Si considera un programma in grado di effettuare la moltiplicazione tra due matrici riempite di interi casuali. Per svolgere questo programma sfruttando la 
+programmazione concorrente, si utilizzano un certo numero di thread assegnati ad un certo numero di righe della matrice. Ci si aspetta che il tempo di esecuzione 
+di questo programma sia velocizzato di un fattore pari al numero di thread, ma essendo presenti molti overhead in questo programma, ed in generale nell'esecuzione di 
+un qualsiasi programma parallelizzabile, non è possibile raggiungere questo incremento ideale. 
+
+%% TODO add stato "zombie" processi che non sono raggiungibili, non in condizione di raggiungere segnali 
+
+Essendo eseguito all'interno di un container docker, il risultato di questa esecuzione dipende dalla configurazione 
+
+
+Nella Home directory è presente un file chiamato \verb|.wslconfig| che specifica le risorse da assegnare, contiene un nome che indica la configurazione tra 
+parentesi quadre, e due parametri \verb|memory| e \verb|processors|, questi se sono commentati indicano il valore di default. Se non è presente è possibile 
+crearlo con il nome della configurazione \verb|[wsl2]|. In versioni successive di docker è possibile modificare questi valori con un'interfaccia grafica 
+tra le impostazioni di docker. 
+Per aggiornare questi valori bisogna terminare il container ed eseguire il comando \verb|wsl --shutdown| per riavviare l'engine wsl con le relative configurazioni. 
+Il tempo di esecuzione diminuendo il numero di core disponibili è migliore rispetto al programma non parallelizzato, ma decisamente peggiore rispetto alla configurazione 
+con più core. Se si modifica il codice del programma per rendere il numero di thread pari al numero di core disponibili allora è possibile aumentare leggermente il 
+tempo di esecuzione. 
+
+In applicazioni di cloud computing, dove sono presenti un numero molto elevato di core, generalmente le macchine virtuali disponibili utilizzano un numero di core maggiore 
+di una divisione equa, poiché è improbabile che tutte le macchine virtuali utilizzino allo stesso tempo tutti i core presenti. Questo meccanismo di oversharing permette 
+di aumentare le prestazioni 
+
+
+\subsection{Modello Consumatori e Produttori}
+
+Un'architettura software è generalmente costituita da un agente produttore che realizza un certo tipo di informazione ed un consumatore che utilizza quest'informazione. 
+Condividono una qualche struttura dati per condividere quest'informazione, accessibile ad entrambi gli agenti. Questo rappresenta un problema di sincronizzazione tra 
+i due agenti. 
+
+Una pila di 10 elementi interi è condivisa tra due thread: un produttore ed un consumatore
+
+\begin{enumerate}
+    \item Il produttore deve essere implementato secondo la seguente logica. In un ciclo infinito:
+    \begin{itemize}
+        \item Deve attendere una quantità di tempo casuale inferiore al secondo;
+        \item Una volta scaduta l'attesa, se la pila è piena, deve attendere che qualche elemento venga rimosso dal consumatore;
+        \item Quando si libera dello spazio nello stack, deve inserire un numero casuale di elementi (senza andare in overflow).
+    \end{itemize}
+    \item Il consumatore deve essere implementato secondo la seguente logica. In un ciclo infinito:
+\end{enumerate}
+Deve attendere una quantità di tempo casuale inferiore al secondo
+Una volta scaduta l'attesa, se lo stack è vuoto, deve attendere che qualche elemento venga inserito dal produttore
+Quando lo stack non è vuoto, deve leggere un numero casuale di elementi, inferiore o uguale al numero di elementi presenti nello stack.
+Suggerimenti:
+\begin{itemize}
+    \item Lo stack può essere implementato con un array di interi, un contatore di elementi già inseriti, e con due funzioni: push() e pop()
+    \item Alcune funzioni utili: random() e usleep();  
+\end{itemize}
+
+Si realizza una struttura dato chiamata \verb|stack| che rappresenta la pila, 
+contenente un array di interi, un intero che indica la dimensione complessiva, ed un 
+ulteriore intero che specifica il numero di posizioni occupate nella pila. 
+
+%% TODO descrizione pop e push
+
+A differenza della funzione \verb|malloc()|, la funzione \verb|calloc()| inizializza 
+tutti i valori della zona di memoria allocata a zero. Si realizza una variabile globale 
+pila, poiché è l'unica struttura dati utilizzata nel problema. Le funzioni di pop e 
+push incluse sono semplificate, si utilizza il valore -1 di default per indicare 
+che l'operazione di pop è stat eseguita su di una pila vuota, anche se questa dovrebbe 
+poter gestire interi negativi. 
+
+Per poter gestire questi due agenti, bisogna creare due thread, assegnati a due funzioni 
+diverse, una consumatore ed un'altra produttore. Per cui queste due funzioni devono 
+restituire una variabile di tipo puntatore a void, ed accettano un argomento 
+di tipo puntatore a void. 
+Si potrebbe realizzare anche con una fork, ma lo spazio di memoria non sarebbe 
+condiviso e quindi il problema sarebbe più difficile, poiché ogni inserimento 
+o rimozione deve essere effettuato su una terza zona di memoria condivisa 
+oppure su di un file. La programmazione multi-processo è quindi 
+tendenzialmente più difficile di una programmazione multithread, poiché sono 
+necessarie più funzioni del sistema operativo per realizzare le stesse 
+operazioni. 
+
+Il produttore itera su un ciclo infinito ed aspetta un intervallo di tempo 
+casuale, fornito da \verb|usleep()| passando come argomento un intero 
+casuale fino a $10^6$, poiché l'unità di misura è in microsecondi. 
+Bisogna effettuare un cast di \verb|1e6|, poiché è di tipo \verb|double| e non 
+è compatibile con l'operatore modulo. Bisogna stabilire 
+quanti elementi da inserire in pila, devono essere in numero inferiore o uguale 
+al numero di posizioni disponibili. Dato questo numero si 
+itera e si inseriscono dei numeri casuali invocando la funzione \verb|push()|. 
+Bisogna inserire un controllo, per verificare se il consumatore deve consumare 
+elementi dalla pila. Per impedire di ripetere continuamente questo ciclo 
+su una pila piena, si attende fino a quando non si libera dello spazio, 
+con un'istruzione condizionale. 
+Il consumatore si implementa analogamente, con un ciclo infinito, che 
+attende per un tempo casuale, e legge nella pila solamente se non è vuota. 
+
+Si inseriscono inoltre delle stampe per indicare le operazioni eseguite 
+da questi due agenti. 
+
+Si inizializza la pila e si definiscono le due variabili contenenti 
+i thread. 
+Per implementare queste queste due funzioni come due thread si creano 
+con la funzione \texttt|pthread\_create()|. Non bisogna specificare né il 
+secondo né il quarto parametro di questa funzione, poiché non si sono 
+opzioni da specificare o il numero di worker. Come primo parametro si 
+inserisce il puntatore al thread, e come terzo la funzione da eseguire. 
+
+A questo punto l'esecuzione di questo programma non produce nulla, poiché il thread 
+principale termina prima dell'esecuzione di questi due thread, terminando 
+anche loro. 
+Il thread principale deve attendere la terminazione dei figli, ma questi 
+eseguono un ciclo infinito quindi non finiranno mai, bisogna essere 
+consapevoli di questo, poiché il programma deve essere terminato con la 
+sequenza ``Ctrl + C''. Si utilizza la funzione \verb|pthread_join()|, 
+specificando come primo parametro i thread di cui bisogna aspettare l'esecuzione 
+ed un parametro nullo. Questi due thread possono accedere alla stessa area di memoria 
+contemporaneamente e quindi bisogna inserire un lock per impedire che 
+tentino di effettuare contemporaneamente operazioni sulla pila. 
+
+Per inserire questo lock si utilizzano due funzioni \verb|pthread_mutex_lock()| 
+e \verb|pthread_mutex_unlock()|, passando come argomento la struttura dati 
+che si vuole bloccare. 
+
+\subsection{Esercitazione del 3 Dicembre}
+
+
+
+\end{document}

@@ -5,7 +5,7 @@
 #define SIZE 10
 
 typedef struct Stack{
-    int* a; // array
+    int* a;    // array
     int size;  // dimensione dell'array
     int used;  // posizione occupate nell'array
 }stack;
