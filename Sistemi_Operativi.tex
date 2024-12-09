@@ -1543,7 +1543,7 @@ contenuto in questo bit è uno, allora cresce positivamente, altrimenti cresce n
 %% TODO img tabella Segment Register
 
 I segmenti possono essere condivisi tra vari spazi di indirizzi, per condividere informazioni tra vari processi, quindi si utilizza un ulteriore campo per impedire 
-accessi non consentiti. Questi bit indicano il permesso di eseguire letture, scritture o esecuzione sui segmenti indicati. Poiché nei sistemi operativi moderni 
+accessi non consentiti. Questi bit indicano il permesso di eseguire letture, scritture o esecuzione sui segmenti indicati, poiché nei sistemi operativi moderni 
 è ancora comune la condivisione di codice tra varie applicazioni e quindi processi. 
 
 Nei sistemi operativi moderni esistono diversi tipi di segmenti di proprietà differenti e contrapposte. Esistono due tipi principali di segmentazione:
@@ -1584,7 +1584,7 @@ memoria fisica in dei ``page frame''. Il problema della traduzione diventa quind
 al numero di pagina fisica ``Page Frame Number'' (PFN). 
 
 Questo approccio è più efficiente rispetto alla segmentazione, poiché non bisogna conoscere a priori come l'heap e lo stack crescono e c'è bisogno che le pagine 
-contengano dati logicamente coerenti. Per di gestire gli spazi liberi molto più facilmente che con la segmentazione, dove si verifica il fenomeno della frammentazione, 
+contengano dati logicamente coerenti. Questo permette di gestire gli spazi liberi molto più facilmente che con la segmentazione, dove si verifica il fenomeno della frammentazione, 
 dato che la pagina virtuale ed il page frame sono della stessa dimensione. 
 
 In generale la prima, o prime, page frame vengono riservate per il sistema operativo. Analogamente per i segmenti, dato uno spazio degli indirizzi avente $h$ byte, 
@@ -1602,7 +1602,11 @@ Il PTE contiene il numero di pagina fisica, dei bit di validità, di protezione 
 scrittura o esecuzione. Ulteriori bit indicano se questa pagina è stata spostata dalla memoria al disco. Dei bit chiamati ``Dirty Bit'' per indicare se la pagina è stata 
 modificata da quando è stata spostata in memoria. Infine sono presenti dei bit di accesso per indicare se la pagina è stata acceduta. 
 
-%% TODO img ex PTE x86 pg. 9
+Si considera un esempio pratico di una PTE di un sistema x86:
+\begin{figure}[H]%
+    \centering%
+    \includegraphics{x86_PTE.pdf}%
+\end{figure}
 
 Il problema della paginazione è la quantità di spazio necessario per conservare queste page table. Mentre per i segmenti erano necessari pochi registri di base e bound 
 per memorizzare queste coppie. Anche nel caso più semplice è necessario un array di lunghezza pari al numero di pagine disponibili nella memoria fisica. 
@@ -1692,24 +1696,36 @@ inserire un componente hardware aggiuntivo chiamato ``Translation Lookaside Buff
 dalla page table. Se il valore voluto è contenuto si ha una TLB hit e si ha il valore per effettuare la traduzione, altrimenti se non è presente si ha una TLB miss 
 e bisogna accedere alla page table direttamente. 
 
-%% TODO img tlb
-
+\begin{figure}[H]%
+    \centering%
+    \includegraphics{tlb.pdf}%
+\end{figure}
 Si considera una possibile implementazione di questa tecnica: 
-
 \begin{minted}{c}
     VPN = (VirtualAddress & VPN_MASK) >> SHIFT
-    (Success, TlbEntry) = TLB_Lookup(VPN)
+    (Success, TLBEntry) = TLB_Lookup(VPN)
         if(Success == True){ // TLB hit
-            if(CanAccess(TlbEntry.ProtectionBit) == True){
+            if(CanAccess(TLBEntry.ProtectionBit) == True){
                 offset = VirtualAddress & OFFSET_MASK
                 PhysAddr = (PTE.PFN << PFN_SHIFT) | offset
                 Register = AccessMemory(PhysAddr)
             }else RaiseException(PROTECTION_FAULT)
         }else{ // TLB miss
-            
-            // stesso codice per l'accesso          
-            TLB_Insert(VPN, PTE.PFN, PTE.ProtectBit)
-            RetryInstruction()
+
+            // Form the address of the page-table entry (PTE)
+            PTEAddr = PTBR + (VPN * sizeof(PTE)) 
+
+            // Fetch the PTE
+            PTE = AccessMemory(PTEAddr)
+
+            // Check if process can access the page
+            if (PTE.Valid == False)
+                RaiseException(SEGMENTATION_FAULT)
+            else if (CanAccess(PTE.ProtectBits) == False)
+                RaiseException(PROTECTION_FAULT)
+            else
+                TLB_Insert(VPN, PTE.PFN, PTE.ProtectBit)
+                RetryInstruction()
         }   
 \end{minted}
 
@@ -1720,14 +1736,28 @@ acceduto in futuro. La località spaziale afferma che se un determinato programm
 Se si vuole accedere a dati spazialmente o temporalmente vicini allora la TLB aumenta notevolmente le prestazioni, poiché si vuole accedere alle stesse pagine.  
 Una TLB potrebbe avere 32, 64, 128 e molto raramente 256 istanze. 
 La struttura di un'istanza in questa cache è molto simile ad una PTE, con l'indirizzo virtuale VPN, l'indirizzo fisico PFN ed un terzo campo per informazioni di validità o 
-di protezione degli accessi. 
-
-%% TODO img istanza del TLB 
+di protezione degli accessi, Read, Write o eXecute. 
 
 Se si effettua un context switch il VPN potrebbe corrispondere ad un VPN di un altro processo nella TLB. Per evitare questi conflitti si utilizza un altro campo 
 ASID,``Address Space IDentifier'' per distinguere a quale spazio degli indirizzi si riferisce. Inoltre è possibile condividere una pagina, inserendo nella TLB lo 
 stesso PFN per due VPN diverse. In questo modo è possibile condividere memoria in modo semplice tra processi diversi, questo permette di diminuire la memoria 
 fisica totale necessaria. 
+
+\begin{center}
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \multicolumn{5}{|c|}{TLB Table}\\
+        \hline
+        VPN & PFN & Validità & Prot. Flags & ASID\\
+        \hline
+        0 & 0 & 1 & rwx & 1\\
+        \hline
+        \multicolumn{5}{|c|}{$\cdots$}\\
+        \hline
+        0 & 1 & 1 & rwx & 2\\
+        \hline
+    \end{tabular}
+\end{center}
 
 Per sostituire gli elementi si possono utilizzare diverse politiche. La politica LRU, ``Least Recently Used'' impone che vengano scartati i dati meno recenti dalla 
 TLB. Per il principio di località temporale è più probabile che gli ultimi indirizzi visitati vengano visitati nuovamente. Nel caso in cui si vuole accedere ad una 
@@ -1741,7 +1771,14 @@ maggiore. Il sistema operativo ha la necessità di salvare porzioni dello spazio
 altri processi in esecuzione. Nei sistemi moderni questo ruolo è tipicamente riservato a dischi rigidi, che siano HDD o SSD, raramente si utilizzano altri 
 dispositivi di memoria secondaria. 
 
-%% TODO img gerarchia della memoria nei sistemi moderni
+In generale si ha un rapporto inversamente proporzionale tra la velocità di accesso e la capacità delle memorie, e questi tipi di memoria vengono organizzati secondo 
+la data gerarchia in un sistema operativo moderno:
+\begin{itemize}
+    \item Registri;
+    \item Cache;
+    \item Memoria Principale (RAM);
+    \item Memoria di Massa (SSD, HDD, Nastro Magnetico, ...).
+\end{itemize}
 
 Generante più grande è la memoria, più lenti sono i tempi di accesso, analogamente l'inverso, più è veloce l'accesso più è piccola la memoria disponibile. Si intrattiene 
 la possibilità di inserire pagine non utilizzate attualmente su memorie secondarie, non in memoria principale. In questo modo si ha una quantità di memoria più grande. 
@@ -1749,7 +1786,11 @@ la possibilità di inserire pagine non utilizzate attualmente su memorie seconda
 Si può suddividere la memoria fisica in page frame, e si suddivide allo stesso modo nella memoria di massa, riservato per un utilizzo previsto per estendere la memoria 
 fisica appartenente al sistema. Questo spazio viene chiamato spazio di swap. 
 
-%% TODO img memoria fisica e secondaria divisione in page
+\begin{figure}[H]
+    \centering%
+    \includegraphics{swap.pdf}%
+\end{figure}
+
 
 Si deve in qualche modo distinguere se una determinata pagina si trova nella memoria principale oppure in una memoria secondaria. Si può utilizzare un bit di 
 presenza, ed in base a questo valore si fornisce un interpretazione diverse al PFN, può indicare una pagina in memoria principale oppure un blocco in memoria secondaria. 

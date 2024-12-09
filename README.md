@@ -3,6 +3,7 @@ Appunti tratti dal corso di Sistemi Operativi, Anno Accademico 2024/25, Dipartim
 
 ## Contenuti:
 - [Appunti](Sistemi_Operativi.pdf) delle lezioni, tenute l'anno accademico 2024/25 dal Professore Stefano Iannucci;
+- [Immagini](Immagini/) necessarie per compilare i file TeX;
 - [Esercizi](Esercizi/) svolti durante il corso. 
 
 ## Contenuti del Corso
@@ -19,7 +20,7 @@ Appunti tratti dal corso di Sistemi Operativi, Anno Accademico 2024/25, Dipartim
 - [Docker Cheat Sheet](https://docs.docker.com/get-started/docker_cheatsheet.pdf) dei comandi più utilizzati;
 - [Tutorial sulla riga di comando](https://ubuntu.com/tutorials/command-line-for-beginners#1-overview) offerto dal docente;
 - Testo di riferimento: "Operating Systems: Three Easy Pieces" di Remzi H. Arpaci-Dusseau e Andrea C. Arpaci-Dusseau. I [capitoli](https://pages.cs.wisc.edu/~remzi/OSTEP/) del libro sono liberamente scaricabili; 
-- [Notion](https://certain-sweater-2c3.notion.site/Sistemi-Operativi-34d7b4a5fddf4b59aed4d37c7f52d6f1), relativo al corso dell'ANno Accademico 2022/2023 tenuto dal Professore Romolo Marotta;
+- [Notion](https://certain-sweater-2c3.notion.site/Sistemi-Operativi-34d7b4a5fddf4b59aed4d37c7f52d6f1), relativo al corso dell'Anno Accademico 2022/2023 tenuto dal Professore Romolo Marotta;
 
 #
 
