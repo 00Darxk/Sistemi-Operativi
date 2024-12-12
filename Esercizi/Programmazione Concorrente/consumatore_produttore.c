@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+
 #define SIZE 10
 
 typedef struct Stack{

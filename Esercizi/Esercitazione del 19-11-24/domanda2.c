@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#define DEFAULT_DIM 4
 
 // Esercizio 2: Gestione di vettori dinamici:
 /**
@@ -9,7 +10,7 @@
  * aumenti la sua capacità quando necessario.
  */
 
-typedef struct vettore{
+typedef struct Vect{
 	int* v;
 	int l;
 	int lmax;
@@ -40,35 +41,34 @@ void addVect(Vect* vect, int x){
 
 // rimuovere un elemento dato il suo indice
 void removeVect(Vect* vect, int i){
-	if(vect->l <= i){
-		printf("\nIndex Overflow\n");
-		return;
-	}else if(i < 0){
-		printf("\nIndex Underflow\n");
-		return;
-	}
-	for (int j = i; j < vect->l-1; j++)
-		vect->v[j] = vect->v[j + 1];
+	if(vect->l <= i) printf("\nIndex Overflow\n");
+	else if(i < 0)   printf("\nIndex Underflow\n");
+	else{ 
+        for (int j = i; j < vect->l-1; j++)
+            vect->v[j] = vect->v[j + 1];
+        vect->l--;
+    }
 }
 
 // stampa tutti gli elementi del vettore
 void printVect(Vect* vect){
-	for(int i = 0; i < vect->l; i++){
-		if(i == 0)
-			printf("[%d, ", vect->v[i]);
-		else if(i == vect->l - 1)
-			printf("%d]\n", vect->v[i]);
-		else
-			printf("%d, ", vect->v[i]);
-		}
+    printArray(vect->v, vect->l);
+}
+
+int printArray(int *array, int x){
+	for (int i = 0; i < x; i++){
+		if(i == 0) printf("[%d, ", array[i]);
+		else if (i == x - 1) printf("%d]\n", array[i]);
+		else printf("%d, ", array[i]);
+	}
 }
 
 int main(){
 	srand(time(NULL));
+	Vect* v = newVect(DEFAULT_DIM);
 	int dim = 0;
-	printf("Specificare la dimensione del vettore: \n");
+        printf("Specifica la dimensione dell'array: \n");
 	scanf("%d%*c", &dim);
-	Vect* v = newVect(dim);
 	for (int i = 0; i < dim; i++)
 		addVect(v, rand()%dim);
 	printVect(v);

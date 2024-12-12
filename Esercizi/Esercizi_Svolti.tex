@@ -28,6 +28,8 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
+    pdftitle={Esercizi Svolti di Sistemi Operativi},
+    pdfauthor={Giacomo Sturm}
 }
 
 \newsavebox{\tempbox} %{\raisebox{\dimexpr.5\ht\tempbox-.5\height\relax}}
@@ -68,12 +70,10 @@ Università degli Studi ``Roma Tre"}}
 \clearpage
 \pagenumbering{arabic}
 
-%% TODO add ref ostep-homework per generare gli homework del corso
+\section{Traduzione di Indirizzi}
+Questi esercizi sono stati generati con strumenti presenti nella repository \href{https://github.com/remzi-arpacidusseau/ostep-homework}{\texttt{ostep-homework}}, utilizzata anche per 
+realizzare gli esercizi presenti nei quiz del corso. 
 
-%% TODO add restanti esercizi
-
-
-\section{Esercizi sulla Traduzione di Indirizzi}
 
 Dato un sistema con uno spazio fisico di 32K ed uno spazio degli indirizzi di 16K e pagine di dimensione 4K. Con PTE eventi il bit più significativo, il più a sinistra, 
 è il bit di validità, se è 1 la traduzione è valida, altrimenti se è 0 non è valida:
@@ -116,27 +116,156 @@ L'ultimo indirizzo appartiene alla quarta VPN:
 \begin{gather*}
     \mathrm{VPN}:\left\lfloor\displaystyle\frac{14878}{4096}\right\rfloor=3\\
     14878-4096*3=2590\\
-    6*4096+2590=27166\theequation
+    6*4096+2590=27166\tageq
 \end{gather*}
-
-
-\section{Esercitazione del 29 Ottobre: Programmazione Multiprocesso}
-
-\subsection{Esercizio 1}
-\subsection{Esercizio 2}
-\subsection{Esercizio 3}
-\subsection{Esercizio 5}
-\subsection{Esercizio 6}
-\subsection{Esercizio 7}
 
 \clearpage
 
-\section{Esercitazione del 19 Novembre: Gestione della Memoria}
+\section{Programmazione Multiprocesso}
+
+Esercizi alle pagine 14 e 15 del \href{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf}{capitolo 5}, esclusa la seconda parte del 3, il numero 4 ed il numero 8.
 
 \subsection{Esercizio 1}
+Write a program that calls \verb|fork()|. Before calling \verb|fork()|, have the main process access a variable, and set its value to something. What 
+value is the variabile in the child process? What happens to the variabile when both the child and parent change the value of $x$?
+
+\inputminted[firstline=1,lastline=2]{c}{./"Esercitazione del 29-10-24"/domanda1.c}
+\inputminted[firstline=8,lastline=15]{c}{./"Esercitazione del 29-10-24"/domanda1.c}
+
+La variabile nel processo genitore e figlio ha lo stesso valore e vengono aggiornate indipendentemente tra di loro, 
+allo stesso modo, poiché i due processi hanno spazi degli indirizzi diversi e nel codice non c'è distinzione 
+tra processo figlio o genitore. 
+
 \subsection{Esercizio 2}
+Write a program that opens a file (with the open() system call) and then calls \verb|fork()| 
+to create a new process. Can both the child and parent access the file descriptor returned 
+by \verb|open()|? What happens when they are writing to the file concurrently, i.e., at the 
+same time?
+
+\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda2.c}
+\inputminted[firstline=13, lastline=26]{c}{./"Esercitazione del 29-10-24"/domanda2.c}
+
+Entrambi i processi possono accedere al file \texttt{domanda2.txt} mediante lo stesso 
+file descriptor, ed in base alle flag inserite nella funzione \verb|open()| possono 
+sovrascrivere il contenuto con \verb|O_TRUNC|, oppure inserirlo in coda con \verb|O_APPEND|. 
+
+Per distinguere tra il processo padre ed il processo figlio si utilizza il valore di ritorno 
+di \verb|fork()| salvato nella variabile \verb|rc|, 0 se nel processo figlio, ed il PID 
+del processo figlio nel genitore. 
+
 \subsection{Esercizio 3}
-\subsection{Esercizio 4: Implementazione di \texttt{my\_alloc()} e \texttt{my\_free()}}
+Write another program using \verb|fork()|. The child process should print ``hello''; the parent process should print ``goodbye''.
+
+\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda3.c}
+\inputminted[firstline=9, lastline=16]{c}{./"Esercitazione del 29-10-24"/domanda3.c}
+
+\subsection{Esercizio 5}
+
+Now write a program that uses \verb|wait()| to wait for the child process to finish in the parent. What does 
+\verb|wait()| return? What happens if you use \verb|wait()| in the child?
+
+
+\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda5.c}
+\inputminted[firstline=11, lastline=19]{c}{./"Esercitazione del 29-10-24"/domanda5.c}
+
+La chiamata di sistema \verb|wait()| restituisce un intero corrispondente al PID del figlio 
+che ha aspettato. Prende come parametro un puntatore ad uno stato del processo da aspettare, 
+di default, quindi con \verb|NULL| aspetta la sua terminazione. Se viene chiamato su un 
+processo che non presenta figli, come il processo figlio in questo caso, termina la chiamata termina istantaneamente. 
+
+\subsection{Esercizio 6}
+
+Write a slight modification of the previous program, this time using \verb|waitpid()| instead of \verb|wait()|. 
+When would \verb|waitpid()| be useful?
+
+\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda6.c}
+\inputminted[firstline=10, lastline=19]{c}{./"Esercitazione del 29-10-24"/domanda6.c}
+
+La funzione \verb|waitpid()| sarebbe più utile in caso fosse presente più di un processo figlio 
+e si volesse attendere la terminazione di uno di questi in particolare. Come 
+la \verb|wait()| il secondo argomento è un puntatore ad un intero dove inserirà lo 
+stato del processo figlio terminato, il primo argomento è un intero e rappresenta il 
+PID del processo da aspettare, e l'ultimo argomento rappresenta opzioni che attraverso 
+delle flag che possono essere unite mettendole in or tra di loro. 
+
+\subsection{Esercizio 7}
+
+Write a program that creates a child process, and then in the child closes standard output \verb|STDOUT FILENO|. 
+What happens if the child calls \verb|printf()| to print some output after closing the descriptor?
+
+
+\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda7.c}
+\inputminted[firstline=11, lastline=17]{c}{./"Esercitazione del 29-10-24"/domanda7.c}
+
+Il processo figlio avendo chiuso lo standard output non è più in grado di stampare a schermo. 
+
+\clearpage
+
+\section{Gestione della Memoria}
+
+\subsection{Allocazione di Memoria Dinamica}
+
+Scrivi un programma che crea un array dinamico di numeri interi di dimensione specificata dall'utente, riempie l'array con numeri casuali e stampa l'array. Assicurati di liberare la memoria allocata alla fine del programma. 
+
+\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 19-11-24"/domanda1.c}
+\inputminted[firstline=20, lastline=32]{c}{./"Esercitazione del 19-11-24"/domanda1.c}
+
+Il programma richiedere un input dall'utente, e crea un array di dimensione 
+pari a questo valore, riempito con interi di valore massimo pari a questo valore. Viene allocata memoria con \verb|malloc()| e liberata con \verb|free()|. 
+
+La funzione \verb|printArray()| è utilizzata per verificare queste aggiunte, e verrà 
+usata nei successivi esercizi:
+\inputminted[firstline=12, lastline=18]{c}{./"Esercitazione del 19-11-24"/domanda1.c}
+
+\subsection{Gestione di Vettori Dinamici}
+
+Implementa una struttura dati per un vettore dinamico di interi. Includi funzioni per aggiungere un elemento, rimuovere un elemento e stampare tutti gli elementi del vettore. Assicurati che il vettore aumenti la sua capacità quando necessario. 
+
+Questo si realizza introducendo una struttura dati contenente un array \verb|v|, la dimensione 
+attuale dell'array \verb|l|, e la dimensione massima per la memoria allocata di \verb|v|, \verb|lmax|:
+
+\inputminted[firstline=1, lastline=5]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+\inputminted[firstline=13, lastline=17]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+
+Si definiscono quindi le funzioni di creazione del vettore, aggiunta di un 
+elemento e rimozione di un elemento, dato un indice. 
+
+\inputminted[firstline=21, lastline=29]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+Per l'aggiunta se viene raggiunta la dimensione massima dell'array, allora viene 
+re-allocato su una zona di memoria di dimensione doppia, avendo un inserimento 
+ammortizzato a tempo costante. Si utilizza quindi la funzione \verb|realloc()|:
+\inputminted[firstline=33, lastline=40]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+Per la rimozione si effettua prima un controllo sull'indice e si effettua uno shift 
+di una posizione verso sinistra di ogni elemento successivo all'indice dato, e si 
+decrementa la lunghezza dell'array \verb|l|:
+\inputminted[firstline=43, lastline=51]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+
+Nella funzione main si controlla il funzionamento generando un vettore di dimensione 
+di default ed aggiungendo un numero di elementi casuali determinati dall'utente. In seguito si rimuove un elemento di indice selezionato. \inputminted[firstline=66, lastline=81]{c}{./"Esercitazione del 19-11-24"/domanda2.c} 
+Si utilizza la funzione \verb|printArray()| precedente per stampare il vettore:
+\inputminted[firstline=58, lastline=64]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+
+\subsection{Manipolazione della memoria}
+
+Scrivi un programma che alloca memoria per un array di interi, usa \verb|memset()| per impostare tutti gli elementi a zero, quindi usa \verb|memcpy()| per copiare il contenuto di un altro array nella memoria appena allocata.
+
+\inputminted[firstline=1, lastline=5]{c}{./"Esercitazione del 19-11-24"/domanda3.c}
+\inputminted[firstline=30, lastline=39]{c}{./"Esercitazione del 19-11-24"/domanda3.c}
+
+La funzione \verb|memset()| prende come argomento un puntatore alla zona di memoria da 
+modificare, il valore da assegnare ad ogni elemento, e la lunghezza per cui deve 
+effettuare questo procedimento. Quindi potrebbe assegnare \verb|0| solamente ad una 
+porzione dell'array se venisse specificato. La funzione \verb|memcpy()| copia nella 
+zona di memoria passata come primo argomento la zona di memoria passata come 
+secondo argomento, quindi è necessario che la funzione \verb|randArray()| restituisce un nuovo array. Inoltre come ultimo argomento prende una dimensione specificata per cui 
+effettuare questa copia. Quindi anche per 
+questa funzione è possibile copiare parzialmente una zona di memoria in un'altra. 
+
+La funzione \verb|randArray()| restituisce un array contenente interi casuali, al massimo fino a \verb|dim|, di dimensione specificata. 
+\inputminted[firstline=21, lastline=27]{c}{./"Esercitazione del 19-11-24"/domanda3.c}
+
+
+\subsection{Implementazione di \texttt{my\_alloc()} e \texttt{my\_free()}}
 
 In questo esercizio bisogna implementare il comportamento delle funzioni \verb|malloc()| e \verb|free()|, 
 senza utilizzare queste due funzioni. Bisogna creare due funzioni una che dato un intero che indica il numero di byte 
@@ -311,30 +440,74 @@ Si definisce infine la funzione per liberare la memoria al termine del programma
 
 \clearpage
 
-\section{Esercizi su Programmazione Concorrente}
+\section{Programmazione Concorrente}
 
-%% TODO rec 2/12/24, file esercizi separati
+\subsection{Moltiplicazione tra Matrici}
 
-Se un problema è parallelizzabile, dove è presente un'architettura multicore o multiprocessore, allora è possibile rendere più veloce 
-l'esecuzione del programma. 
+Se un problema è parallelizzabile e si può implementare utilizzando thread con una qualsiasi libreria, non necessariamente \verb|pthread|. Se è presente un'architettura multicore o multiprocessore, allora è molto probabile rendere più veloce 
+l'esecuzione del programma, ottenendo prestazioni migliori.  
 
-Per in-strumentare ed ottenere parametri dell'esecuzione si può utilizzare la funzione \verb|gettimeofday()|, più precisa rispetto alla funzione \verb|time()|, 
-che restituisce il valore in una variabile di tipo \verb|time_val|. Restituisce il time stamp della chiamata ed una porzione relativa ai microsecondi. 
 
-%% time_taken = end.t_sec - start.t_sec
+Si considera un programma in grado di effettuare la moltiplicazione tra due matrici riempite di interi casuali. Si ha una macro che definisce una dimensione massima per 
+la matrice bidimensionale e si definiscono tre matrici in variabili globali. 
+Una prima funzione riempie le matrici in modo casuale:
+\inputminted[firstline=1, lastline=15]{c}{./"Programmazione Concorrente"/single.c}
+Un ulteriore funzione effettua questa moltiplicazione, in modo seriale:
+\inputminted[firstline=17, lastline=24]{c}{./"Programmazione Concorrente"/single.c}
 
-Si considera un programma in grado di effettuare la moltiplicazione tra due matrici riempite di interi casuali. Per svolgere questo programma sfruttando la 
-programmazione concorrente, si utilizzano un certo numero di thread assegnati ad un certo numero di righe della matrice. Ci si aspetta che il tempo di esecuzione 
-di questo programma sia velocizzato di un fattore pari al numero di thread, ma essendo presenti molti overhead in questo programma, ed in generale nell'esecuzione di 
+Nella funzione main si inizializzano queste due matrici. Inoltre si utilizza una funzione per in-strumentare il codice ed ottenere statistiche, in questo caso 
+riguardanti i tempi di esecuzione. Si può utilizzare la funzione \texttt{gettimeofday()}, più precisa rispetto alla funzione \verb|time()|, 
+che restituisce il valore in una variabile di tipo \verb|time_val| del tempo corrente. Questa struttura contiene un campo contenente il time stamp, ed un'altra porzione che 
+contiene il valore in microsecondi al momento dell'esecuzione della funzione. 
+\verb|time()| invece ha intervalli di tempo in secondi, e non ha informazioni sul 
+tempo in microsecondi. 
+
+Intorno alla funzione di cui vogliamo conoscere queste statistiche sono presenti 
+due chiamata alla funzione descritta, salvando i loro valori in due variabili diverse. 
+In seguito si effettua una somma sulla stessa scale per determinare il tempo effettivo 
+dell'esecuzione:
+\inputminted[firstline=26, lastline=42]{c}{./"Programmazione Concorrente"/single.c}
+
+
+Per svolgere questo programma sfruttando la 
+programmazione concorrente, si utilizzano un certo numero di thread assegnati ad un certo numero di righe della matrice. 
+Si realizza una struttura dati per contenere le informazioni relative ad i thread, e 
+si assegna un certo numero di thread:
+\inputminted[firstline=1, lastline=19]{c}{./"Programmazione Concorrente"/multi.c}
+
+Il calcolo del prodotto tra matrici avviene quindi sui sottoinsiemi del problema 
+contenuti nella struttura di tipo \verb|ThreadData|: 
+\inputminted[firstline=27, lastline=36]{c}{./"Programmazione Concorrente"/multi.c}
+
+Il problema viene diviso su questi thread, associando ad ognuno di questi thread un 
+sottoinsieme delle righe della matrice originaria: 
+\inputminted[firstline=42, lastline=44]{c}{./"Programmazione Concorrente"/multi.c}
+
+L'unica altra modifica rispetto al programma seriale è la presenza di un ciclo 
+tra le due \verb|gettimeofday()|, dove vengono avviati tutti i thread, inizializzando 
+le loro strutture \verb|thread_data|, ed un altro ciclo per effettuare un join su 
+ognuno di questi thread:
+\inputminted[firstline=50, lastline=63]{c}{./"Programmazione Concorrente"/multi.c}
+
+
+
+Ci si aspetta che il tempo di esecuzione 
+di questo programma sia velocizzato di un fattore pari al numero di thread, ma essendo presenti overhead, ed in generale nell'esecuzione di 
 un qualsiasi programma parallelizzabile, non è possibile raggiungere questo incremento ideale. 
+In questo caso inoltre il programma viene eseguito in un container docker quindi ha uno stack molto profondo, è quindi difficile ottenere le prestazioni volute. Utilizzando il comando \verb|top|, durante l'esecuzione di questa funzione mostra come le percentuali di utilizzo della CPU 
+sono del 400\%, poiché rappresenta la somma dell'utilizzo di ogni core del processore, avendo 
+quattro thread è quindi quattro volte l'utilizzo del programma seriale. 
 
-%% TODO add stato "zombie" processi che non sono raggiungibili, non in condizione di raggiungere segnali 
 
-Essendo eseguito all'interno di un container docker, il risultato di questa esecuzione dipende dalla configurazione 
-
-
+Essendo eseguito all'interno di un container docker, il risultato di questa esecuzione dipende dalla configurazione corrente. In caso il numero di core disponibili è minore del numero di thread descritti in questo file è necessario modificare la configurazione di docker. 
 Nella Home directory è presente un file chiamato \verb|.wslconfig| che specifica le risorse da assegnare, contiene un nome che indica la configurazione tra 
-parentesi quadre, e due parametri \verb|memory| e \verb|processors|, questi se sono commentati indicano il valore di default. Se non è presente è possibile 
+parentesi quadre, e due parametri \verb|memory| e \verb|processors|, questi se sono commentati indicano il valore di default:
+\begin{minted}{c}
+    [wsl2]
+    #memory=4GB
+    processors=4
+\end{minted}
+Se non è presente è possibile 
 crearlo con il nome della configurazione \verb|[wsl2]|. In versioni successive di docker è possibile modificare questi valori con un'interfaccia grafica 
 tra le impostazioni di docker. 
 Per aggiornare questi valori bisogna terminare il container ed eseguire il comando \verb|wsl --shutdown| per riavviare l'engine wsl con le relative configurazioni. 
@@ -343,18 +516,21 @@ con più core. Se si modifica il codice del programma per rendere il numero di t
 tempo di esecuzione. 
 
 In applicazioni di cloud computing, dove sono presenti un numero molto elevato di core, generalmente le macchine virtuali disponibili utilizzano un numero di core maggiore 
-di una divisione equa, poiché è improbabile che tutte le macchine virtuali utilizzino allo stesso tempo tutti i core presenti. Questo meccanismo di oversharing permette 
-di aumentare le prestazioni 
+di una divisione equa, poiché è improbabile che tutte le macchine virtuali utilizzino allo stesso tempo tutti i core presenti. Questo meccanismo di over-provisioning o sovradimensionamento permette di aumentare le prestazioni delle macchine virtuali 
+presenti, permettendole di operare con più risorse di quante siano le risorse fisiche 
+disponibili. Questa tecnica può essere effettuata anche sulla memoria principale o 
+secondaria per ogni macchina virtuale. 
 
 
 \subsection{Modello Consumatori e Produttori}
 
-Un'architettura software è generalmente costituita da un agente produttore che realizza un certo tipo di informazione ed un consumatore che utilizza quest'informazione. 
-Condividono una qualche struttura dati per condividere quest'informazione, accessibile ad entrambi gli agenti. Questo rappresenta un problema di sincronizzazione tra 
-i due agenti. 
+Un'architettura software molto usata è costituita da un agente produttore che realizza un certo tipo di informazione ed un consumatore che utilizza quest'informazione. 
+Condividono una qualche struttura dati per condividere quest'informazione, accessibile ad entrambi gli agenti. Questo rappresenta un problema di sincronizzazione tra i due, tra i più classici e rappresenta un'architettura di base per sistemi moderni, per 
+realizzare applicazioni moderni, come applicazioni basate su microservizi. 
 
-Una pila di 10 elementi interi è condivisa tra due thread: un produttore ed un consumatore
 
+
+Una pila di 10 elementi interi è condivisa tra due thread: un produttore ed un consumatore. 
 \begin{enumerate}
     \item Il produttore deve essere implementato secondo la seguente logica. In un ciclo infinito:
     \begin{itemize}
@@ -369,21 +545,24 @@ Una volta scaduta l'attesa, se lo stack è vuoto, deve attendere che qualche ele
 Quando lo stack non è vuoto, deve leggere un numero casuale di elementi, inferiore o uguale al numero di elementi presenti nello stack.
 Suggerimenti:
 \begin{itemize}
-    \item Lo stack può essere implementato con un array di interi, un contatore di elementi già inseriti, e con due funzioni: push() e pop()
-    \item Alcune funzioni utili: random() e usleep();  
+    \item Lo stack può essere implementato con un array di interi, un contatore di elementi già inseriti, e con due funzioni: \verb|push()| e \verb|pop()|;
+    \item Alcune funzioni utili: \verb|random()| e \verb|usleep()|.  
 \end{itemize}
 
 Si realizza una struttura dato chiamata \verb|stack| che rappresenta la pila, 
 contenente un array di interi, un intero che indica la dimensione complessiva, ed un 
-ulteriore intero che specifica il numero di posizioni occupate nella pila. 
+ulteriore intero che specifica il numero di posizioni occupate nella pila:
+\inputminted[firstline=1, lastline=14]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
+Si realizza una variabile globale 
+pila, poiché è l'unica struttura dati utilizzata nel problema. 
 
-%% TODO descrizione pop e push
-
+Si definiscono quindi le operazioni di inizializzazione della pila, di inserimento e rimozione 
+in coda:
+\inputminted[firstline=16, lastline=36]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
 A differenza della funzione \verb|malloc()|, la funzione \verb|calloc()| inizializza 
-tutti i valori della zona di memoria allocata a zero. Si realizza una variabile globale 
-pila, poiché è l'unica struttura dati utilizzata nel problema. Le funzioni di pop e 
+tutti i valori della zona di memoria allocata a zero. Le funzioni di pop e 
 push incluse sono semplificate, si utilizza il valore -1 di default per indicare 
-che l'operazione di pop è stat eseguita su di una pila vuota, anche se questa dovrebbe 
+che l'operazione di pop è stata eseguita su di una pila vuota, anche se questa dovrebbe 
 poter gestire interi negativi. 
 
 Per poter gestire questi due agenti, bisogna creare due thread, assegnati a due funzioni 
@@ -432,16 +611,51 @@ eseguono un ciclo infinito quindi non finiranno mai, bisogna essere
 consapevoli di questo, poiché il programma deve essere terminato con la 
 sequenza ``Ctrl + C''. Si utilizza la funzione \verb|pthread_join()|, 
 specificando come primo parametro i thread di cui bisogna aspettare l'esecuzione 
-ed un parametro nullo. Questi due thread possono accedere alla stessa area di memoria 
+ed un parametro nullo:
+\inputminted[firstline=70, lastline=79]{c}{./"Programmazione Concorrente"/consumatore_produttore.c} 
+Questi due thread possono accedere alla stessa area di memoria 
 contemporaneamente e quindi bisogna inserire un lock per impedire che 
 tentino di effettuare contemporaneamente operazioni sulla pila. 
 
-Per inserire questo lock si utilizzano due funzioni \verb|pthread_mutex_lock()| 
-e \verb|pthread_mutex_unlock()|, passando come argomento la struttura dati 
-che si vuole bloccare. 
+Per inserire questo lock si utilizzano due funzioni \verb|lock()| 
+e \verb|unlock()|, passando come argomento un riferimento alla struttura dati 
+che si vuole bloccare. Si avrà quindi per il produttore:
+\inputminted[firstline=38, lastline=53]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
+E per il consumatore:
+\inputminted[firstline=55, lastline=67]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
 
 \subsection{Esercitazione del 3 Dicembre}
 
+Un file su disco ha il seguente formato:
+\begin{minted}{html}
+    <numero_record><record 1><record 2>...
+\end{minted}
+Dove: 
+\begin{itemize}
+    \item \verb|<numero_record>| è un intero rappresentante il numero di record attualmente presenti all'interno del file;
+    \item \verb|<record1><record2>...| sono ognuno un numero intero.
+\end{itemize}
+Il file è acceduto da due thread: un produttore ed un consumatore, ed è gestito come se fosse una pila: i nuovi elementi vengono accodati al termine del file, e la lettura (con contestuale rimozione) degli elementi avviene dall'ultimo elemento del file. Il file non deve contenere più di 10 record oltre all'indicatore iniziale del numero di record presenti.
 
+I due thread, produttore e consumatore, hanno il seguente comportamento:
+\begin{enumerate}
+    \item Il produttore, in un ciclo infinito:
+    \begin{enumerate}
+        \item Deve attendere una quantità di tempo casuale inferiore al secondo;
+        \item Una volta scaduta l'attesa, se la pila contenuta nel file è piena, deve attendere che qualche elemento venga rimosso dal consumatore;
+        \item Quando si libera dello spazio nella pila, deve inserire un numero casuale di elementi (senza andare in overflow rispetto alle dimensioni della pila) ed aggiornare il contatore all'inizio del file.
+    \end{enumerate}
+    \item Il consumatore, in un ciclo infinito:
+    \begin{enumerate}
+        \item Deve attendere una quantità di tempo casuale inferiore al secondo;
+        \item Una volta scaduta l'attesa, se la pila è vuota, deve attendere che qualche elemento venga inserito dal produttore;
+        \item Quando la pila non è vuota, deve leggere un numero casuale di elementi (inferiore o uguale al numero di elementi presenti nello stack), sostituirne il valore con il numero 0 ed aggiornare il valore all'inizio del file.
+    \end{enumerate}
+\end{enumerate}
+
+Suggerimento:
+
+Quando si esegue una \verb|read()| o una \verb|write()| su un file, viene spostato un cursore in avanti del numero di byte letti o scritti sul file. Ad esempio, se un file contenesse la stringa ``ciaopino'' e venisse effettuata una \verb|read()| di 4 byte, questa leggerebbe ``ciao''. Un'eventuale seconda \verb|read()| di 4 byte leggerebbe invece ``pino''. Allo stesso modo, se si eseguisse una prima lettura di 4 byte e successivamente una scrittura di 4 byte della stringa ``anno'', il file conterrebbe la stringa ``ciaoanno'' al termine dell'esecuzione delle \verb|read()| e delle \verb|write()|.
+\`{E} possibile spostare il cursore anche senza necessariamente effettuare una \verb|read()| o una \verb|write()|, utilizzando la funzione \verb|lseek()|, usa il manuale per scoprire come usare \verb|lseek()|.
 
 \end{document}

@@ -28,7 +28,9 @@ int* randArray(int dim){
 
 
 int main(){
-	int dim = 15;
+	int dim = 0;
+    printf("Specifica la dimensione dell'array: \n");
+	scanf("%d%*c", &dim);
 	int* array = malloc(dim * sizeof(int));
 	array = memset(array, 0, dim * sizeof(int));
 	printArray(array, dim);

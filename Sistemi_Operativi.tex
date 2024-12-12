@@ -28,10 +28,20 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
+    pdftitle={Appunti di Sistemi Operativi},
+    pdfauthor={Giacomo Sturm}
 }
 
 \newsavebox{\tempbox} %{\raisebox{\dimexpr.5\ht\tempbox-.5\height\relax}}
+\newcounter{mylabelcounter}
 
+\makeatletter
+\newcommand{\labelText}[2]{%
+#1\refstepcounter{mylabelcounter}%
+\immediate\write\@auxout{%
+  \string\newlabel{#2}{{1}{\thepage}{{\unexpanded{#1}}}{mylabelcounter.\number\value{mylabelcounter}}{}}%
+}%
+}
 \makeatother
 
 \numberwithin{equation}{subsection}
@@ -69,6 +79,8 @@ Università degli Studi ``Roma Tre"}}
 \pagenumbering{arabic}
 
 %% TODO redo section 
+%% TODO add stato "zombie" processi che non sono raggiungibili, non in condizione di raggiungere segnali 
+
 
 \section{Introduzione e Docker} 
 
@@ -637,39 +649,38 @@ Questi programmi vengono eseguiti essenzialmente in contemporanea, per cui il si
 che tutti questi programmi vengono eseguiti allo stesso tempo. Questo si chiama problema della concorrenza. 
 Programmi moderni esacerbano questo necessitando di più thread, necessitando di più core virtuali. 
 
-Si considera il seguente codice \verb|thread.c|:
+Si considera il seguente codice \labelText{\texttt{thread.c}}{label:thread}:
 \begin{minted}{c}
 	#include <stdio.h>
 	#include <stdlib.h>
-	#include "common.h"
+        #include <pthread.h>
 
-	int counter = 0;
+	static volatile int counter = 0;
 	int loops;
 
-	void *worker(void *arg) {
-		int i;
-		for (i = 0; i < loops; i++) 
-			counter++;
-		return NULL;
+        void *worker(void *arg) {
+            for (int i = 0; i < loops; i++)
+                counter = counter + 1;
+            return NULL;
 	}
 	int main(int argc, char *argv[]) {
-        if (argc != 2) {
-            fprintf(stderr, "usage: threads<value>\n");
-            exit(1);
+            if (argc != 2) {
+                fprintf(stderr, "usage: threads<value>\n");
+                exit(1);
+            }
+            loops = atoi(argv[1]);
+            pthread_t p1, p2;
+            printf("Initial value : %d\n", counter);
+
+            pthread_create(&p1, NULL, worker, NULL);
+            pthread_create(&p2, NULL, worker, NULL);
+            pthread_join(p1, NULL);
+            pthread_join(p2, NULL);
+            printf("Final value : %d\n", counter);
+            return 0;
         }
-        loops = atoi(argv[1]);
-        pthread_t p1, p2;
-        printf("Initial value : %d\n", counter);
-
-        Pthread_create(&p1, NULL, worker, NULL);
-        Pthread_create(&p2, NULL, worker, NULL);
-        Pthread_join(p1, NULL);
-        Pthread_join(p2, NULL);
-        printf("Final value : %d\n", counter);
-        return 0;
-	}
 \end{minted}
-
+%$
 Questo programma utilizza due threads per modificare una variabile condivisa, incrementandone il valore da zero ad ogni ciclo. 
 Per un numero di cicli relativamente piccolo, il valore restituito da questo programma rappresenta esattamente il doppio del valore inserito 
 come argomento. Ma per numeri più elevati di cicli di loop, il valore tende a cambiare rispetto al valore atteso. 
@@ -1931,7 +1942,8 @@ eseguito. Il primo parametro di questa funzione è un riferimento al thread, in 
 all'indirizzo della funzione all'interno del programma. Rappresenta l'identificativo della funzione, ed è la funzione che verrà eseguita dall'esecuzione del thread. L'ultimo parametro è il 
 parametro che viene passato come argomento per la funzione che viene eseguita all'interno del thread. Questa funzione ha un argomento di tipo \verb|void*|, un puntatore generico ad un argomento 
 di cui non conosciamo il tipo. In questo modo è possibile passare un argomento di tipo arbitrario ed effettuare un downcast all'interno della funzione per ottenere le informazioni necessarie. 
-Se si vogliono passare più di un parametro, è sufficiente realizzare una struttura contenente questi parametri e passare un'istanza di questa struttura. 
+Se si vogliono passare più di un parametro, è sufficiente realizzare una struttura contenente questi parametri e passare un'istanza di questa struttura. La funzione passata al thread si comporta 
+come un'altra funzione \verb|main| in esecuzione, relativa al dato thread. 
 
 In ogni programma, è sempre presente il thread principale associato alla funzione \verb|main()|, quindi è possibile che in un istante siano presenti tre thread contemporaneamente. 
 La funzione \verb|pthread_join()| è l'equivalente della chiamata di sistema \verb|wait()|, infatti il thread che effettua la chiamata aspetta la terminazione del thread su 
@@ -1969,12 +1981,252 @@ Oppure:
     corso@sistemi-operativi:~/ostep-code/thread-info$
 \end{minted}
 
+Per cui in un programma che utilizza thread non è scorretto inserire istruzioni supponendo l'esecuzione di altre istruzioni prima o dopo in altri thread, poiché l'ordine di esecuzione non è 
+determinato dal programmatore. 
+
 Dalle pagine di manuale della \verb|pthread_create()| il secondo parametro è una variabile che definisce attributi specifici per il thread, tra cui la dimensione dello stack. Invece per la 
 funzione \verb|pthread_join()|, il secondo valore rappresenta il valore di ritorno del thread. Ciò che viene restituito dall'esecuzione del thread viene catturato ed assegnato alla variabile 
 di tipo \verb|void**| passata come argomento. 
 
 \subsection{Lock}
 
-%% TODO add lock 26/12/24
+Utilizzando più thread è possibile condividere la stessa area di memoria e quindi è possibile in modo più semplice condividere informazioni tra vari thread. 
+Si considera un codice simile a quello descritto precedentemente: \nameref{label:thread}. 
+
+In questo programma si condivide un'informazione tra i vari thread con una variabile globale \verb|counter|. In questo modo entrambi i thread possono incrementare il valore contenuto 
+nella variabile globale. Questo programma prende come input il numero di iterazioni da eseguire, ed ogni thread esegue queste operazioni ed incrementa la variabile globale condivisa, quindi 
+ci si aspetta che al termine del programma questa variabile sia pari al doppio del valore fornito al programma. Questo funziona solamente per valori di input relativamente piccoli. 
+Questo avviene poiché l'operazione di incremento non è un'operazione atomica, è composta da tre operazioni, in cui prima viene memorizzato dalla memoria in un registro del processore, poi 
+viene incrementato ed in seguito viene aggiornato il valore in memoria. In determinate circostanze questo funziona poiché i due thread riescono ad effettuare le loro operazioni all'interno di 
+un quanto di tempo loro assegnato, quindi vengono eseguiti sequenzialmente. 
+
+Questo problema sorge con l'aggiornamento concorrente di una variabile. Quando più thread tentano di accedere ed effettuare operazioni su una stessa variabile allo stesso momento, si verifica 
+il fenomeno della ``Race Condition''. In questo fenomeno il risultato della computazione dipende dall'ordine delle operazioni, ma in un sistema multi-threaded questo non può essere controllato. 
+Nel momento in cui si ha una race condition, questa si ha sempre su una stessa sezione di codice chiamata ``Critical Section'' che può essere eseguita da più thread contemporaneamente, e può 
+generare una race condition. In questo programma la sezione critica è:
+\begin{minted}{c}
+    counter = counter + 1    
+\end{minted}
+Questa può essere divisa in linguaggio assemblativo in tre diverse istruzioni:
+\begin{minted}{gas}
+    mov 0x..., %eax    # spostamento dalla memoria al registro
+    add $0x1,  %eax    # aggiornamento del valore nel registro
+    mov %eax,  0x...   # spostamento dal registro alla memoria
+\end{minted}
+%$
+
+Quindi è possibile che il sistema operativo invochi un interrupt durante lo svolgimento di questa sezione e quindi non venga completato l'aggiornamento del valore in memoria. Se questo 
+succedesse, allora il secondo thread non lavorerebbe con il valore aggiornato della variabile, ed al termine del quanto di tempo dedicato a questo thread, il suo risultato verrebbe 
+sovrascritto in memoria da quello del primo thread. 
+Si potrebbe risolvere questo problema introducendo un'ulteriore istruzione atomica per effettuare in modo atomico l'incremento di un valore in memoria, chiamata \verb|memory-add|:
+\begin{minted}{gas}
+    memory-add 0x..., $0x1    
+\end{minted}
+%$
+In questo modo l'operazione viene eseguita o non eseguita, e non è possibile che il sistema operativo interrompendo l'esecuzione di un thread, lasci quest'operazione in uno stato intermedio. 
+Un'istruzione atomica di questo tipo è facilmente realizzabile, ma rappresenta una soluzione specifica per questo problema. In modo generale questo è impraticabile poiché bisognerebbe 
+implementare a livello di hardware ogni tipo di operazioni che generano una race condition su ogni tipo di struttura dati. 
+
+Bisogna trovare una soluzione flessibile in modo che l'accesso ad una sezione critica sia serializzato, ovvero eliminare la concorrenza. In determinati casi come questi la concorrenza 
+va eliminata, anche nel caso di programmazione concorrente. Questo si può effettuare utilizzando i ``lock'', ci si aspetta di avere una data sezione critica vengano aggiunte due istruzioni 
+che permettono soltanto ad un thread per volta di interagire con la sezione critica:
+\begin{minted}{c}
+    lock_t mutex;
+    // ... 
+    lock(&mutex);
+    counter = counter + 1;
+    unlock(&mutex);
+\end{minted}
+
+Uno dei problemi più difficili è identificare la sezione critica, se è troppo grande allora non avrebbe senso realizzare il programma tramite thread, se fosse troppo piccola, invece l'overhead 
+dovuto a questo continuo locking ed unlocking della sezione critica sarebbe tale da diminuire le prestazioni del programma concorrente. In entrambi questi due casi limite quindi sarebbe più 
+efficiente utilizzare un programma sequenziale e non concorrente. 
+Un lock è una variabile che contiene un'informazione su quale thread possa eseguire il codice contenuto nella sezione critica. La variabile di lock contiene lo stato del lock, che può 
+essere disponibile o libero, oppure un secondo valore acquisito o bloccato, che indica che qualche thread è andato ad acquisire il lock. Un thread tenta di accedere ad un lock subito prima 
+di eseguire una sezione critica. Se il lock è libero lo acquisisce ed esegue la sezione critica, se non è libero allora nessun altro thread nel processo sarà in grado di acquisire lo stesso 
+lock. Nello librerie POSIX i lock vengono chiamati mutex, ``Mutual Exclusion'', e sono presenti nella libreria \verb|pthread.h|:
+\begin{minted}{c}
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    // ... 
+    pthread_mutex_lock(&lock);
+    counter = counter + 1;
+    pthread_mutex_unlock(&lock);
+\end{minted}
+
+Dal punto di vista della programmazione è molto semplice l'utilizzo dei lock, ma al livello del sistema operativo è molto più complesso, e richiede anche l'intervento dell'hardware. 
+Bisogna permettere ad ogni thread di accedere a questa variabile \verb|lock| quindi in questo caso necessariamente bisogna rappresentarla come una variabile globale:
+\begin{minted}{c}
+    #include <stdio,h>
+    #include <stdlib.h>
+    #include <pthread.h>
+
+    static volatile int counter = 0;
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    int loop;
+
+    void *worker(void *arg){
+        for (int i = 0; i < loops; i++){
+            pthread_mutex_lock(&lock);
+            counter = counter + 1;
+            pthread_mutex_unlock(&lock);
+        }
+        return NULL;
+    }
+
+    int main(int argc, char *argv[]){
+        if (argc != 2){
+            fprintf(stderr, "usage: threads<value>\n");
+            exit(1);
+        }
+
+        loops = atoi(argv[1]);
+        pthread_t p1, p2;
+        printf("Initial value: %d\n", counter);
+
+        pthread_create(&p1, NULL, worker, "A");
+        pthread_create(&p2, NULL, worker, "B");
+        pthread_join(p1, NULL);
+        pthread_join(p2, NULL);
+        printf("Final value: %d\n", counter);
+        return 0;
+    }
+\end{minted}
+
+Oltre alle due funzioni sul lock appena viste, altre funzioni come la \verb|try_lock()| tentano di accedere al lock, ma l'esecuzione non si ferma se questo non avviene. Questo permette di 
+continuare ad eseguire altre operazioni mentre il lock è occupato. 
+Queste operazioni per il lock prendono come parametro un puntatore alla variabile di tipo \verb|mutex| nel programma. 
+
+Seppure dal punto di vista della programmazione è molto semplice, si potrebbe voler serializzare il minor possibile la sezione critica, ma questo competerebbe un pesante overhead. Si può 
+determinare il tempo di esecuzione utilizzando la flag \verb|time| quando viene eseguito un programma. Fornisce diverse statistiche sull'esecuzione del programma, tra cui il tempo di esecuzione. 
+Se la sezione critica considerasse completamente il ciclo di aggiornamento della variabile \verb|counter|, la velocità del programma è molto più veloce rispetto a questa implementazione, poiché l'overhead è 
+di gran lunga maggiore del tempo necessario all'aggiornamento dell'elemento:
+\begin{minted}{c}
+    void *worker(void *arg){
+        pthread_mutex_lock(&lock);
+        for (int i = 0; i < loops; i++)
+            counter = counter + 1;
+        pthread_mutex_unlock(&lock);
+        return NULL;
+    }
+\end{minted}
+
+In casi come questi la serializzazione è solamente una questione di stile, poiché questo programma è equivalente ad un programma che esegue sequenzialmente questi due cicli, uno dopo l'altro. 
+
+I lock vengono implementati come delle operazioni atomiche, quindi permettono di aumentare le prestazioni in certi casi. Per confrontare le diverse implementazioni di lock, si utilizzano i criteri della 
+mutua esclusione, di fairness e di prestazione. La mutua esclusione è la condizione minima indispensabile per poter rappresentare un thread, l'equità è un criterio che misura quando è possibile che in una data 
+implementazione un thread vada in starvation, ovvero non gli venga ceduto accesso alla risorsa lock. Inoltre le prestazioni, l'overhead aggiunto dal lock non deve essere influente sul tempo di esecuzione del 
+programma, o almeno non deve essere un incremento significativo rispetto ad una versione seriale dello stesso programma. 
+La più semplice implementazione di lock consiste nella disabilitazione degli interrupt da parte del sistema operativo, quindi il thread ottiene il controllo completo del processore per l'intera sezione 
+critica, ma questo richiede troppa fiducia nelle applicazioni. 
+\begin{minted}{c}
+    void lock(){
+        DisableInterrupt();
+    }
+    void unlock(){
+        EnableInterrupt();
+    }
+\end{minted}
+Non conviene utilizzare questo approccio poiché non si può affidare troppa responsabilità ad un semplice processo. Inoltre disabilitando gli 
+interrupt è possibile perdere molte informazioni che altrimenti verrebbero rilevate. Se il calcolatore fosse multiprocessore, allora questo non impedirebbe ad altri thread di accedere alla sezione critica, se 
+vengono eseguiti da un altro processore. 
+
+Un lock richiede essenzialmente di tre funzioni, una funzione per inizializzare il lock, una funzione per acquisirlo e rilasciarlo. Si considera una struttura dati del lock, contenente un unica flag rappresentata 
+da un intero. Questa flag individua se il lock è occupato o libero. Si potrebbe stabilire che ad un valore di zero il lock è occupato, mentre è libero con un valore di uno:
+\begin{minted}{c}
+    typedef struct __lock_t { int flag; } lock_t;
+
+    void init(lock_t *mutex){
+        mutex->flag = 0;
+    }
+
+    void lock(lock_t *mutex){
+        while (mutex->flag == 1)
+            ;   // spin
+        mutex->flag = 1
+    }
+
+    void unlock(lock_t *mutex){
+        mutex->flag = 0;
+    }
+\end{minted}
+
+Nella funzione \verb|lock()| se il lock è occupato, allora si aspetta e si controlla continuamente se è libero, uscendo dal ciclo quando ciò è verificato. Questo approccio sembrerebbe funzionare, ma questa implementazione 
+non funziona. Considerando due thread, il primo thread potrebbe chiamare la funzione \verb|lock()| e potrebbe essere interrotto alla verifica della condizione del ciclo. A questo punto il secondo thread invoca 
+la stessa funzione ed acquisisce il lock, ma il primo thread aveva già verificato la condizione, quindi quando verrà eseguito nuovamente accederà anch'esso al lock, generando una race condition. 
+Ciò non risolve la mutua esclusività. Questo processo di aspettare la disponibilità del thread permette a più thread di accedere allo stesso lock. \`{E} quindi necessaria un'istruzione atomica fornita dall'hardware. 
+Inoltre questo ciclo è molto costoso in termini di risorse, poiché esegue continuamente l'istruzione di verifica monopolizzando la CPU. Si introduce una nuova istruzione atomica:
+\begin{minted}{c}
+    int TestAndSet(int *ptr, int new){
+        int old = *ptr;
+        *ptr = new;
+        return old;
+    }
+\end{minted}
+Questa rappresenta una singola istruzione a livello hardware. Questa funzione prende due parametri, un puntatore ad intero, ed un nuovo valore da assegnare al riferimento all'intero come primo argomento. 
+Il valore puntato viene letto e memorizzato in una variabile \verb|old|, in seguito viene aggiornato con il secondo parametro e viene restituito il valore precedente. 
+Rispetto alla struttura dati non cambia niente, cambia solamente la funzione \verb|lock()|:
+\begin{minted}{c}
+    void lock(lock_t *mutex){
+        while (TestAndSet(&mutex->flag, 1) == 1)
+            ;   // spin
+    }
+\end{minted}
+
+Ad ogni verifica si rimpiazza il valore del lock con un valore pari ad uno, se questo è verificato continua il ciclo. Quando il valore di flag è pari a zero, viene aggiornato ad uno, ed il vecchio valore viene 
+restituito e verificato, questo interrompe il ciclo e permette al thread di acquisire il lock.  
+
+Quest'implementazione dal punto di vista della correttezza mantiene la mutua esclusività. Dal punto di vista della fairness, il primo thread che invoca la funzione su un lock libero lo acquisisce, quindi è indipendente 
+dal tempo che un thread ha aspettato per acquisire il lock, quindi non è equa. Poiché la funzione si basa sulla ``Spin Wait'', occupa costantemente il processore, e non è quindi favorevole al livello delle prestazioni. 
+
+Si vuole stabilire un ordine tra i thread per l'accesso al lock, realizzando una coda FIFO. Questo permette ai thread in attesa da più tempo di ricevere per primi l'accesso al lock. Si introduce una nuova 
+istruzione atomica:
+\begin{minted}{c}
+    int FetchAndAdd(int *ptr){
+        int old = *ptr;
+        *ptr = old + 1;
+        return old;
+    }
+\end{minted}
+
+Simile alla funzione precedente, ma con un piccola differenza. Permette di realizzare l'incremento di un indice che può essere utilizzato per stabilire le posizioni di una coda. 
+Si suppone di avere due variabili che definiscono lo stato del lock:
+\begin{minted}{c}
+    typedef struct __lock_t{
+        int ticket;
+        int turn;
+    }  lock_t;  
+\end{minted}
+La prima variabile rappresenta il numero di thread che hanno tentato di accedere al lock, ed ogni volta che un thread tenta di accedere ad un lock gli viene assegnato un valore sempre maggiore. La seconda variabile 
+determina il turno, ovvero il thread in coda a cui è concesso accedere al lock. 
+\begin{minted}{c}
+    void init(lock_t *mutex){
+        mutex->ticket = 0;
+        mutex->turn = 0;
+    }
+
+    void lock(lock_t *mutex){
+        int my_turn = FetchAndAdd(&lock->ticket);
+        while (mutex->turn != my_turn)
+            ;   // spin
+    }
+
+    void unlock(lock_t *mutex){
+        FetchAndAdd(&lock->ticket);
+    }
+\end{minted}
+Finché il turno del lock è diverso dal thread corrente, questo gira, aspetta fino a quando non diventa il suo turno, poiché ha la garanzia che quel ticket con quel numero sarà assegnato esclusivamente ad un 
+singolo thread. La funzione di rilascio aumenta la variabile del turno, poiché avendo completato un turno passa al successivo. 
+
+Questo realizza un lock mutuo esclusivo e permette anche di avere fairness. Nonostante non sia necessario è preferibile avere un criterio di equità per i lock in caso sia necessario in futuro. 
+Rimane una questione riguardo l'efficienza dei lock, la spin wait infatti è un'operazione molto costosa in grado di monopolizzare l'utilizzo del processore. 
+Invece di avere un semplice ciclo, all'interno del ciclo si può inserire la funzione \verb|yield()| per rilasciare da parte del thread chiamante l'utilizzo del processore. Nei sistemi POSIX questa funzione si chiama 
+\verb|sched_yield()|. \`{E} possibile inserire questa funzione in entrambe le implementazioni di lock precedenti:
+\begin{minted}{c}
+    void lock(lock_t *mutex){
+        int my_turn = FetchAndAdd(&lock->ticket);
+        while (mutex->turn != my_turn)
+            sched_yield();
+    }    
+\end{minted}
 
 \end{document}
