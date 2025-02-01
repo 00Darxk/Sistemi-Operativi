@@ -70,10 +70,10 @@ void* consumatore(void* arg){
 int main(){
     init();
     pthread_t cons, prod;
-
     pthread_create(&cons, NULL, consumatore, NULL);
     pthread_create(&prod, NULL, produttore, NULL);
 
     pthread_join(prod, NULL);
     pthread_join(cons, NULL);
+    pthread_mutex_destroy(&pila);
 }

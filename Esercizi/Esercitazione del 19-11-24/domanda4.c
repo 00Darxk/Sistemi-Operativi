@@ -29,8 +29,8 @@ static Block* free_list = NULL;
 
 void init_memory_pool(){
     if(memory_pool == NULL){
-        memory_pool = (Block*) mmap(NULL, MEMORY_POOL_SIZE, 
-        PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        memory_pool = (Block*) mmap(NULL, MEMORY_POOL_SIZE, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+
         if(memory_pool == MAP_FAILED){
             pererror("mmap");
             exit(1);

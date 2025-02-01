@@ -14,8 +14,7 @@ void fill_matrix(int matrix[MATRIX_SIZE][MATRIX_SIZE]){
             matrix[i][j] = rand() % 100;
 }
 
-void multiply_matrices_single_threaded( int a[MATRIX_SIZE][MATRIX_SIZE], 
-                                        int b[MATRIX_SIZE][MATRIX_SIZE]){
+void multiply_matrices_single_threaded( int a[MATRIX_SIZE][MATRIX_SIZE], int b[MATRIX_SIZE][MATRIX_SIZE]){
     for (int i = 0; i < MATRIX_SIZE; i++)
         for (int j = 0; j < MATRIX_SIZE; j++){
             result[i][j] = 0;

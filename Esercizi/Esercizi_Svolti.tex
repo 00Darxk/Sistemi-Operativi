@@ -19,6 +19,7 @@
 %\usepackage{float}
 %\usepackage{wrapfig}
 %\usepackage[export]{adjustbox}
+\usepackage[stable]{footmisc}
 \allowdisplaybreaks
 
 \setlength{\headheight}{12.0pt}
@@ -29,7 +30,9 @@
     colorlinks=true,
     linkcolor=black,
     pdftitle={Esercizi Svolti di Sistemi Operativi},
-    pdfauthor={Giacomo Sturm}
+    pdfauthor={Giacomo Sturm},
+    pdfsubject={Sistemi Operativi},
+    pdfkeywords={Sistemi Operativi, Operating System, C, Processi, Thread}
 }
 
 \newsavebox{\tempbox} %{\raisebox{\dimexpr.5\ht\tempbox-.5\height\relax}}
@@ -41,7 +44,7 @@
 \AtBeginDocument{%
   \renewcommand{\figurename}{Fig.}
 }
-\fancypagestyle{link}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{Sorgente del file LaTeX disponibile al seguente link: \url{https://github.com/00Darxk/Sistemi-Operativi}}}
+\fancypagestyle{link}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{Sorgente del file \LaTeX disponibile al seguente link: \url{https://github.com/00Darxk/Sistemi-Operativi}}}
 
 \begin{document}
 
@@ -121,16 +124,16 @@ L'ultimo indirizzo appartiene alla quarta VPN:
 
 \clearpage
 
-\section{Programmazione Multiprocesso}
+\section{Programmazione Multiprocesso\footnote{\textit{Dall'esercitazione in laboratorio del 29 Ottobre 2024}}}
 
-Esercizi alle pagine 14 e 15 del \href{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf}{capitolo 5}, esclusa la seconda parte del 3, il numero 4 ed il numero 8.
+Esercizi alle pagine 14 e 15 del \href{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-api.pdf}{capitolo 5}, esclusa la seconda parte del 3, il numero 4 ed il numero 8. I codici sono disponibili presso il seguente link \href{https://github.com/00Darxk/Sistemi-Operativi/tree/main/Esercizi/Esercitazione%20del%2029-10-24/}{Esercitazione del 29 Ottobre 2024}.
 
 \subsection{Esercizio 1}
 Write a program that calls \verb|fork()|. Before calling \verb|fork()|, have the main process access a variable, and set its value to something. What 
 value is the variabile in the child process? What happens to the variabile when both the child and parent change the value of $x$?
 
-\inputminted[firstline=1,lastline=2]{c}{./"Esercitazione del 29-10-24"/domanda1.c}
-\inputminted[firstline=8,lastline=15]{c}{./"Esercitazione del 29-10-24"/domanda1.c}
+\inputminted[firstline=1,lastline=2]{c}{./Esercitazione del 29-10-24/domanda1.c}
+\inputminted[firstline=8,lastline=15]{c}{./Esercitazione del 29-10-24/domanda1.c}
 
 La variabile nel processo genitore e figlio ha lo stesso valore e vengono aggiornate indipendentemente tra di loro, 
 allo stesso modo, poiché i due processi hanno spazi degli indirizzi diversi e nel codice non c'è distinzione 
@@ -142,8 +145,8 @@ to create a new process. Can both the child and parent access the file descripto
 by \verb|open()|? What happens when they are writing to the file concurrently, i.e., at the 
 same time?
 
-\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda2.c}
-\inputminted[firstline=13, lastline=26]{c}{./"Esercitazione del 29-10-24"/domanda2.c}
+\inputminted[firstline=1, lastline=4]{c}{./Esercitazione del 29-10-24/domanda2.c}
+\inputminted[firstline=13, lastline=26]{c}{./Esercitazione del 29-10-24/domanda2.c}
 
 Entrambi i processi possono accedere al file \texttt{domanda2.txt} mediante lo stesso 
 file descriptor, ed in base alle flag inserite nella funzione \verb|open()| possono 
@@ -156,8 +159,8 @@ del processo figlio nel genitore.
 \subsection{Esercizio 3}
 Write another program using \verb|fork()|. The child process should print ``hello''; the parent process should print ``goodbye''.
 
-\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda3.c}
-\inputminted[firstline=9, lastline=16]{c}{./"Esercitazione del 29-10-24"/domanda3.c}
+\inputminted[firstline=1, lastline=4]{c}{./Esercitazione del 29-10-24/domanda3.c}
+\inputminted[firstline=9, lastline=16]{c}{./Esercitazione del 29-10-24/domanda3.c}
 
 \subsection{Esercizio 5}
 
@@ -165,8 +168,8 @@ Now write a program that uses \verb|wait()| to wait for the child process to fin
 \verb|wait()| return? What happens if you use \verb|wait()| in the child?
 
 
-\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda5.c}
-\inputminted[firstline=11, lastline=19]{c}{./"Esercitazione del 29-10-24"/domanda5.c}
+\inputminted[firstline=1, lastline=4]{c}{./Esercitazione del 29-10-24/domanda5.c}
+\inputminted[firstline=11, lastline=19]{c}{./Esercitazione del 29-10-24/domanda5.c}
 
 La chiamata di sistema \verb|wait()| restituisce un intero corrispondente al PID del figlio 
 che ha aspettato. Prende come parametro un puntatore ad uno stato del processo da aspettare, 
@@ -178,8 +181,8 @@ processo che non presenta figli, come il processo figlio in questo caso, termina
 Write a slight modification of the previous program, this time using \verb|waitpid()| instead of \verb|wait()|. 
 When would \verb|waitpid()| be useful?
 
-\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda6.c}
-\inputminted[firstline=10, lastline=19]{c}{./"Esercitazione del 29-10-24"/domanda6.c}
+\inputminted[firstline=1, lastline=4]{c}{./Esercitazione del 29-10-24/domanda6.c}
+\inputminted[firstline=10, lastline=19]{c}{./Esercitazione del 29-10-24/domanda6.c}
 
 La funzione \verb|waitpid()| sarebbe più utile in caso fosse presente più di un processo figlio 
 e si volesse attendere la terminazione di uno di questi in particolare. Come 
@@ -194,28 +197,30 @@ Write a program that creates a child process, and then in the child closes stand
 What happens if the child calls \verb|printf()| to print some output after closing the descriptor?
 
 
-\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 29-10-24"/domanda7.c}
-\inputminted[firstline=11, lastline=17]{c}{./"Esercitazione del 29-10-24"/domanda7.c}
+\inputminted[firstline=1, lastline=4]{c}{./Esercitazione del 29-10-24/domanda7.c}
+\inputminted[firstline=11, lastline=17]{c}{./Esercitazione del 29-10-24/domanda7.c}
 
 Il processo figlio avendo chiuso lo standard output non è più in grado di stampare a schermo. 
 
 \clearpage
 
-\section{Gestione della Memoria}
+\section{Gestione della Memoria\footnote{\textit{Dall'esercitazione in laboratorio del 19 Novembre 2024}}}
+
+I codici sono disponibili presso il seguente link \href{https://github.com/00Darxk/Sistemi-Operativi/tree/main/Esercizi/Esercitazione%20del%2019-11-24/}{Esercitazione del 19 Novembre 2024}.
 
 \subsection{Allocazione di Memoria Dinamica}
 
 Scrivi un programma che crea un array dinamico di numeri interi di dimensione specificata dall'utente, riempie l'array con numeri casuali e stampa l'array. Assicurati di liberare la memoria allocata alla fine del programma. 
 
-\inputminted[firstline=1, lastline=4]{c}{./"Esercitazione del 19-11-24"/domanda1.c}
-\inputminted[firstline=20, lastline=32]{c}{./"Esercitazione del 19-11-24"/domanda1.c}
+\inputminted[firstline=1, lastline=4]{c}{./Esercitazione del 19-11-24/domanda1.c}
+\inputminted[firstline=20, lastline=32]{c}{./Esercitazione del 19-11-24/domanda1.c}
 
 Il programma richiedere un input dall'utente, e crea un array di dimensione 
 pari a questo valore, riempito con interi di valore massimo pari a questo valore. Viene allocata memoria con \verb|malloc()| e liberata con \verb|free()|. 
 
 La funzione \verb|printArray()| è utilizzata per verificare queste aggiunte, e verrà 
 usata nei successivi esercizi:
-\inputminted[firstline=12, lastline=18]{c}{./"Esercitazione del 19-11-24"/domanda1.c}
+\inputminted[firstline=12, lastline=18]{c}{./Esercitazione del 19-11-24/domanda1.c}
 
 \subsection{Gestione di Vettori Dinamici}
 
@@ -224,33 +229,33 @@ Implementa una struttura dati per un vettore dinamico di interi. Includi funzion
 Questo si realizza introducendo una struttura dati contenente un array \verb|v|, la dimensione 
 attuale dell'array \verb|l|, e la dimensione massima per la memoria allocata di \verb|v|, \verb|lmax|:
 
-\inputminted[firstline=1, lastline=5]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
-\inputminted[firstline=13, lastline=17]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+\inputminted[firstline=1, lastline=5]{c}{./Esercitazione del 19-11-24/domanda2.c}
+\inputminted[firstline=13, lastline=17]{c}{./Esercitazione del 19-11-24/domanda2.c}
 
 Si definiscono quindi le funzioni di creazione del vettore, aggiunta di un 
 elemento e rimozione di un elemento, dato un indice. 
 
-\inputminted[firstline=21, lastline=29]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+\inputminted[firstline=21, lastline=29]{c}{./Esercitazione del 19-11-24/domanda2.c}
 Per l'aggiunta se viene raggiunta la dimensione massima dell'array, allora viene 
 re-allocato su una zona di memoria di dimensione doppia, avendo un inserimento 
 ammortizzato a tempo costante. Si utilizza quindi la funzione \verb|realloc()|:
-\inputminted[firstline=33, lastline=40]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+\inputminted[firstline=33, lastline=40]{c}{./Esercitazione del 19-11-24/domanda2.c}
 Per la rimozione si effettua prima un controllo sull'indice e si effettua uno shift 
 di una posizione verso sinistra di ogni elemento successivo all'indice dato, e si 
 decrementa la lunghezza dell'array \verb|l|:
-\inputminted[firstline=43, lastline=51]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+\inputminted[firstline=43, lastline=51]{c}{./Esercitazione del 19-11-24/domanda2.c}
 
 Nella funzione main si controlla il funzionamento generando un vettore di dimensione 
-di default ed aggiungendo un numero di elementi casuali determinati dall'utente. In seguito si rimuove un elemento di indice selezionato. \inputminted[firstline=66, lastline=81]{c}{./"Esercitazione del 19-11-24"/domanda2.c} 
+di default ed aggiungendo un numero di elementi casuali determinati dall'utente. In seguito si rimuove un elemento di indice selezionato. \inputminted[firstline=66, lastline=81]{c}{./Esercitazione del 19-11-24/domanda2.c} 
 Si utilizza la funzione \verb|printArray()| precedente per stampare il vettore:
-\inputminted[firstline=58, lastline=64]{c}{./"Esercitazione del 19-11-24"/domanda2.c}
+\inputminted[firstline=58, lastline=64]{c}{./Esercitazione del 19-11-24/domanda2.c}
 
 \subsection{Manipolazione della memoria}
 
 Scrivi un programma che alloca memoria per un array di interi, usa \verb|memset()| per impostare tutti gli elementi a zero, quindi usa \verb|memcpy()| per copiare il contenuto di un altro array nella memoria appena allocata.
 
-\inputminted[firstline=1, lastline=5]{c}{./"Esercitazione del 19-11-24"/domanda3.c}
-\inputminted[firstline=30, lastline=39]{c}{./"Esercitazione del 19-11-24"/domanda3.c}
+\inputminted[firstline=1, lastline=5]{c}{./Esercitazione del 19-11-24/domanda3.c}
+\inputminted[firstline=30, lastline=39]{c}{./Esercitazione del 19-11-24/domanda3.c}
 
 La funzione \verb|memset()| prende come argomento un puntatore alla zona di memoria da 
 modificare, il valore da assegnare ad ogni elemento, e la lunghezza per cui deve 
@@ -262,10 +267,9 @@ effettuare questa copia. Quindi anche per
 questa funzione è possibile copiare parzialmente una zona di memoria in un'altra. 
 
 La funzione \verb|randArray()| restituisce un array contenente interi casuali, al massimo fino a \verb|dim|, di dimensione specificata. 
-\inputminted[firstline=21, lastline=27]{c}{./"Esercitazione del 19-11-24"/domanda3.c}
+\inputminted[firstline=21, lastline=27]{c}{./Esercitazione del 19-11-24/domanda3.c}
 
-
-\subsection{Implementazione di \texttt{my\_alloc()} e \texttt{my\_free()}}
+\subsection{Implementazione di \texttt{my\_alloc()} e \texttt{my\_free()}\footnote{\textit{Soluzione Offerta dal Professore in Aula}}}
 
 In questo esercizio bisogna implementare il comportamento delle funzioni \verb|malloc()| e \verb|free()|, 
 senza utilizzare queste due funzioni. Bisogna creare due funzioni una che dato un intero che indica il numero di byte 
@@ -345,7 +349,7 @@ specificare il file descriptor per il file su cui si vuole operare. Con questa f
 \verb|fd| viene ignorato, e convenzionalmente viene inserito il valore -1. 
 Queste funzioni appartengono allo standard POSIX, su molti sistemi operativi basati sul kernel Linux, e sono in accordo rispetto a delle interfacce e prototipi di funzioni, che possono 
 avere implementazioni anche molto differenti l'una con l'altra. Quindi in alcune implementazioni, è richiesto che \verb|fd| sia uguale a -1. Dato che l'offset non viene utilizzato si pone pari a zero. La chiamata alla funzione \verb|mmap()| è quindi:
-\inputminted[firstline=32,lastline=33]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=32,lastline=32, breaklines, breakanywhere]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 Per la \verb|munmap()| si hanno due argomenti, l'indirizzo di base della mappa che si vuole 
 rimuovere, e come secondo argomento si prende la dimensione della zona di memoria da liberare. La funzione \verb|free()| non ha bisogno di questo parametro, ma identifica automaticamente la 
@@ -366,7 +370,7 @@ una porzione di memoria, in modo che la \verb|my_free()| sia in grado di liberar
 implementare un meccanismo analogo alla \verb|free()|, inserendo un header per salvare metadati 
 relativi alla memoria richiesta. Si realizza una struttura dati di tipo \verb|block| contenente la dimensione del blocco di memoria che segue il metadato, una variabile che 
 indica se il blocco è libero ed il suo successivo blocco di memoria:
-\inputminted[firstline=21,lastline=26]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=21,lastline=26]{c}{./Esercitazione del 19-11-24/domanda4.c}
 Inizialmente questa zona di memoria rappresenta un intero blocco, contenente nei primi 16 byte un puntatore al relativo \verb|block| contenente i metadati. 
 %% TODO img zona di memoria allocata
 Quando si effettua una chiamata alla \verb|my_alloc()| di dimensione minore della memoria 
@@ -402,19 +406,19 @@ fornito dalla \verb|my_alloc()|.
 
 
 All'inizio del programma si definiscono due macro, una per la dimensione della memoria, e la seguente per la dimensione minima di un blocco: 
-\inputminted[firstline=7,lastline=8]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=7,lastline=8]{c}{./Esercitazione del 19-11-24/domanda4.c}
 Si inizializzano due variabili puntatore a blocco per lo spazio di memoria e per la lista 
 dei blocchi liberi:
-\inputminted[firstline=27,lastline=28]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=27,lastline=28]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 La prima funzione inizializza lo spazio di memoria, chiamando un'unica volta nell'intero programma la funzione \verb|mmap()|, controllando se ha fallito l'esecuzione ed inizializzando 
 i valori dei metadati che si sta creando. 
-\inputminted[firstline=30,lastline=44]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=30,lastline=44,breaklines, breakanywhere]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 Si definisce in seguito l'operazione per suddividere dei blocchi, dato un riferimento ad un blocco \verb|block| e la dimensione della memoria occupata nel blocco \verb|size|, inserendo in coda il nuovo blocco.  
 Il puntatore di base del nuovo blocco si ottiene dall'indirizzo del blocco, sommando la dimensione della memoria da occupare passata come parametro \verb|size| e la dimensione del blocco. La dimensione di questo nuovo blocco è la dimensione rimasta, dopo aver rimosso dalla dimensione corrente del blocco la dimensione dei dati che si sta inserendo \verb|size| e la dimensione del blocco. Lo stato di questo nuovo blocco è libero ed ha come successivo, il blocco 
 successivo del corrente. Si aggiornano in fine i metadati del blocco passato, inserendo come successivo questo nuovo blocco. 
-\inputminted[firstline=47,lastline=56]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=47,lastline=56]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 
 Un'ulteriore funzione stampa il layout della memoria in un dato momento, ogni volta che viene 
@@ -424,25 +428,27 @@ Segue la definizione della \verb|my_alloc()|, rifiuta richieste di allocazioni d
 In seguito scorre la \verb|free_list| cercando un blocco libero, di dimensione maggiore della richiesta. Se viene trovato, si controlla se è possibile frammentarlo, ed in caso viene chiamata la \verb|split_blocks()|, altrimenti semplicemente si assegna il blocco corrente come occupato. 
 In seguito viene restituito l'indirizzo di partenza della memoria allocata, aggiungendo la dimensione del blocco all'indirizzo del blocco corrente. 
 Se non viene individuato alcun blocco viene restituito \verb|NULL|, poiché si è esaurita la memoria di dimensione maggiore della dimensione specificata. 
-\inputminted[firstline=70,lastline=89]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=70,lastline=89]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 In seguito si definisce la funzione per unire tra loro due blocchi, quando si trovano due nodi 
 liberi adiacenti, scorrendo la lista. 
-\inputminted[firstline=91,lastline=96]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=91,lastline=96]{c}{./Esercitazione del 19-11-24/domanda4.c}
 Quest'implementazione permette l'unione di blocchi adiacenti, controllando solamente a destra, se fossero presenti dei blocchi liberi alla sinistra, non verrebbero uniti tra di loro. 
 
 
 Per realizzare la \verb|my_free()| si passa un puntatore, e si ottiene l'indirizzo al blocco corrispondente, sottraendo la dimensione di un blocco. Si aggiornano i suoi metadati e si tenta di unire blocchi liberi, chiamando la \verb|merge_blocks()| sul blocco corrente:
-\inputminted[firstline=98,lastline=107]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=98,lastline=107]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 Si definisce infine la funzione per liberare la memoria al termine del programma:
-\inputminted[firstline=109,lastline=116]{c}{./"Esercitazione del 19-11-24"/domanda4.c}
+\inputminted[firstline=109,lastline=116]{c}{./Esercitazione del 19-11-24/domanda4.c}
 
 \clearpage
 
 \section{Programmazione Concorrente}
 
-\subsection{Moltiplicazione tra Matrici}
+I codici sono disponibili presso il seguente link \href{https://github.com/00Darxk/Sistemi-Operativi/tree/main/Esercizi/Programmazione%20Concorrente/}{Programmazione Concorrente}.
+
+\subsection{Introduzione: Moltiplicazione tra Matrici}
 
 Se un problema è parallelizzabile e si può implementare utilizzando thread con una qualsiasi libreria, non necessariamente \verb|pthread|. Se è presente un'architettura multicore o multiprocessore, allora è molto probabile rendere più veloce 
 l'esecuzione del programma, ottenendo prestazioni migliori.  
@@ -451,9 +457,9 @@ l'esecuzione del programma, ottenendo prestazioni migliori.
 Si considera un programma in grado di effettuare la moltiplicazione tra due matrici riempite di interi casuali. Si ha una macro che definisce una dimensione massima per 
 la matrice bidimensionale e si definiscono tre matrici in variabili globali. 
 Una prima funzione riempie le matrici in modo casuale:
-\inputminted[firstline=1, lastline=15]{c}{./"Programmazione Concorrente"/single.c}
+\inputminted[firstline=1, lastline=15]{c}{./Programmazione Concorrente/single.c}
 Un ulteriore funzione effettua questa moltiplicazione, in modo seriale:
-\inputminted[firstline=17, lastline=24]{c}{./"Programmazione Concorrente"/single.c}
+\inputminted[firstline=17, lastline=24, breaklines, breakanywhere]{c}{./Programmazione Concorrente/single.c}
 
 Nella funzione main si inizializzano queste due matrici. Inoltre si utilizza una funzione per in-strumentare il codice ed ottenere statistiche, in questo caso 
 riguardanti i tempi di esecuzione. Si può utilizzare la funzione \texttt{gettimeofday()}, più precisa rispetto alla funzione \verb|time()|, 
@@ -466,28 +472,28 @@ Intorno alla funzione di cui vogliamo conoscere queste statistiche sono presenti
 due chiamata alla funzione descritta, salvando i loro valori in due variabili diverse. 
 In seguito si effettua una somma sulla stessa scale per determinare il tempo effettivo 
 dell'esecuzione:
-\inputminted[firstline=26, lastline=42]{c}{./"Programmazione Concorrente"/single.c}
+\inputminted[firstline=26, lastline=42]{c}{./Programmazione Concorrente/single.c}
 
 
 Per svolgere questo programma sfruttando la 
 programmazione concorrente, si utilizzano un certo numero di thread assegnati ad un certo numero di righe della matrice. 
 Si realizza una struttura dati per contenere le informazioni relative ad i thread, e 
 si assegna un certo numero di thread:
-\inputminted[firstline=1, lastline=19]{c}{./"Programmazione Concorrente"/multi.c}
+\inputminted[firstline=1, lastline=19]{c}{./Programmazione Concorrente/multi.c}
 
 Il calcolo del prodotto tra matrici avviene quindi sui sottoinsiemi del problema 
 contenuti nella struttura di tipo \verb|ThreadData|: 
-\inputminted[firstline=27, lastline=36]{c}{./"Programmazione Concorrente"/multi.c}
+\inputminted[firstline=27, lastline=36]{c}{./Programmazione Concorrente/multi.c}
 
 Il problema viene diviso su questi thread, associando ad ognuno di questi thread un 
 sottoinsieme delle righe della matrice originaria: 
-\inputminted[firstline=42, lastline=44]{c}{./"Programmazione Concorrente"/multi.c}
+\inputminted[firstline=42, lastline=44]{c}{./Programmazione Concorrente/multi.c}
 
 L'unica altra modifica rispetto al programma seriale è la presenza di un ciclo 
 tra le due \verb|gettimeofday()|, dove vengono avviati tutti i thread, inizializzando 
 le loro strutture \verb|thread_data|, ed un altro ciclo per effettuare un join su 
 ognuno di questi thread:
-\inputminted[firstline=50, lastline=63]{c}{./"Programmazione Concorrente"/multi.c}
+\inputminted[firstline=50, lastline=63,breaklines, breakanywhere]{c}{./Programmazione Concorrente/multi.c}
 
 
 
@@ -521,8 +527,7 @@ presenti, permettendole di operare con più risorse di quante siano le risorse f
 disponibili. Questa tecnica può essere effettuata anche sulla memoria principale o 
 secondaria per ogni macchina virtuale. 
 
-
-\subsection{Modello Consumatori e Produttori}
+\subsection{Produttori e Consumatori}
 
 Un'architettura software molto usata è costituita da un agente produttore che realizza un certo tipo di informazione ed un consumatore che utilizza quest'informazione. 
 Condividono una qualche struttura dati per condividere quest'informazione, accessibile ad entrambi gli agenti. Questo rappresenta un problema di sincronizzazione tra i due, tra i più classici e rappresenta un'architettura di base per sistemi moderni, per 
@@ -552,13 +557,13 @@ Suggerimenti:
 Si realizza una struttura dato chiamata \verb|stack| che rappresenta la pila, 
 contenente un array di interi, un intero che indica la dimensione complessiva, ed un 
 ulteriore intero che specifica il numero di posizioni occupate nella pila:
-\inputminted[firstline=1, lastline=14]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
+\inputminted[firstline=1, lastline=14]{c}{./Programmazione Concorrente/consumatore_produttore.c}
 Si realizza una variabile globale 
 pila, poiché è l'unica struttura dati utilizzata nel problema. 
 
 Si definiscono quindi le operazioni di inizializzazione della pila, di inserimento e rimozione 
 in coda:
-\inputminted[firstline=16, lastline=36]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
+\inputminted[firstline=16, lastline=36]{c}{./Programmazione Concorrente/consumatore_produttore.c}
 A differenza della funzione \verb|malloc()|, la funzione \verb|calloc()| inizializza 
 tutti i valori della zona di memoria allocata a zero. Le funzioni di pop e 
 push incluse sono semplificate, si utilizza il valore -1 di default per indicare 
@@ -612,7 +617,7 @@ consapevoli di questo, poiché il programma deve essere terminato con la
 sequenza ``Ctrl + C''. Si utilizza la funzione \verb|pthread_join()|, 
 specificando come primo parametro i thread di cui bisogna aspettare l'esecuzione 
 ed un parametro nullo:
-\inputminted[firstline=70, lastline=79]{c}{./"Programmazione Concorrente"/consumatore_produttore.c} 
+\inputminted[firstline=70, lastline=79]{c}{./Programmazione Concorrente/consumatore_produttore.c} 
 Questi due thread possono accedere alla stessa area di memoria 
 contemporaneamente e quindi bisogna inserire un lock per impedire che 
 tentino di effettuare contemporaneamente operazioni sulla pila. 
@@ -620,11 +625,11 @@ tentino di effettuare contemporaneamente operazioni sulla pila.
 Per inserire questo lock si utilizzano due funzioni \verb|lock()| 
 e \verb|unlock()|, passando come argomento un riferimento alla struttura dati 
 che si vuole bloccare. Si avrà quindi per il produttore:
-\inputminted[firstline=38, lastline=53]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
+\inputminted[firstline=38, lastline=53]{c}{./Programmazione Concorrente/consumatore_produttore.c}
 E per il consumatore:
-\inputminted[firstline=55, lastline=67]{c}{./"Programmazione Concorrente"/consumatore_produttore.c}
+\inputminted[firstline=55, lastline=67]{c}{./Programmazione Concorrente/consumatore_produttore.c}
 
-\subsection{Esercitazione del 3 Dicembre}
+\subsection{Produttori e Consumatori su File\footnote{\textit{Dall'esercitazione in laboratorio del 3 Dicembre 2024}}}
 
 Un file su disco ha il seguente formato:
 \begin{minted}{html}
@@ -653,9 +658,101 @@ I due thread, produttore e consumatore, hanno il seguente comportamento:
     \end{enumerate}
 \end{enumerate}
 
-Suggerimento:
+\subsubsection*{Suggerimento}
 
 Quando si esegue una \verb|read()| o una \verb|write()| su un file, viene spostato un cursore in avanti del numero di byte letti o scritti sul file. Ad esempio, se un file contenesse la stringa ``ciaopino'' e venisse effettuata una \verb|read()| di 4 byte, questa leggerebbe ``ciao''. Un'eventuale seconda \verb|read()| di 4 byte leggerebbe invece ``pino''. Allo stesso modo, se si eseguisse una prima lettura di 4 byte e successivamente una scrittura di 4 byte della stringa ``anno'', il file conterrebbe la stringa ``ciaoanno'' al termine dell'esecuzione delle \verb|read()| e delle \verb|write()|.
 \`{E} possibile spostare il cursore anche senza necessariamente effettuare una \verb|read()| o una \verb|write()|, utilizzando la funzione \verb|lseek()|, usa il manuale per scoprire come usare \verb|lseek()|.
+
+\subsubsection*{Soluzione}
+
+Questo rappresenta un problema simile a quello mostrato in precedenza, quindi i due thread del produttore e del consumatore sono realizzati in modo molto simile:
+\inputminted[firstline=106, lastline=145, breaklines, breakanywhere, autogobble]{c}{./Programmazione Concorrente/produttore_consumatore_file.c}
+
+La differenza sostanziale consiste nella diversa implementazione delle funzioni \verb|pop()| e \verb|push()|. Mentre nell'esercizio precedente queste accedevano ad una pila condivisa, in questo esercizio devono accedere ad un file esterno. Questo file contiene l'insieme dei record acceduti con politica LIFO. Le due funzioni dopo aver letto la dimensione dal primo intero, scorrono il cursore sul file per aggiungere alla fine un intero, per la \verb|push()| oppure rimuovere un intero azzerandolo, per la \verb|pop()|. Per facilità si realizza un'ulteriore funzione per ottenere la dimensione della pila sul file \verb|getDim()|:
+\inputminted[firstline=37, lastline=46, breaklines, breakanywhere]{c}{./Programmazione Concorrente/produttore_consumatore_file.c}
+Mentre le due funzioni \verb|pop()| e \verb|push()| sono:
+
+\inputminted[firstline=64, lastline=104, breaklines, breakanywhere]{c}{./Programmazione Concorrente/produttore_consumatore_file.c}
+Nella funzione principale si inizializzano le variabili globali e si attende un periodo di tempo prima di terminare la entrambi i thread. 
+Si può definire un'ulteriore funzione di supporto, non richiesta, per stampare il contenuto del file ad ogni iterazione per facilitare la correzione:
+\inputminted[firstline=89, lastline=104, breaklines, breakanywhere]{c}{./Programmazione Concorrente/produttore_consumatore_file.c}
+
+\subsection{Simulazione di uno Scheduler}
+
+Il seguente esercizio ha lo scopo di simulare lo scheduler di un sistema operativo e l'esecuzione di processi (job), nel caso semplificato in cui l'esecuzione di un processo non può essere interrotta e non è necessario accedere a risorse oltre la CPU.
+
+Si consideri il seguente scenario. Si dispone di un computer dove:
+\begin{itemize}
+    \item Il tasso di arrivi dei processi è pari a 10 processi al secondo. In altre parole, è come se venissero eseguite sul computer considerato 10 applicazioni al secondo;
+    \item Il tempo di esecuzione di ogni processo è un valore casuale sempre inferiore a 1 secondo;
+    \item Lo scheduler non supporta più di 1000 processi in coda. Ciò vuol dire che, se la coda è piena, non vengono ricevuti nuovi processi;
+    \item Lo scheduler implementa la politica FIFO.
+\end{itemize}
+Scrivere un simulatore che implementi il comportamento dello scenario descritto e che calcoli il turnaround time medio al variare dei seguenti parametri:
+\begin{itemize}
+    \item Durata della simulazione: il numero di job che arrivano all'interno del sistema è pari a 10, 20, 30;
+    \item Numero delle CPU: il computer in considerazione può avere 1, 2, 4 CPU. 
+\end{itemize}
+
+\subsubsection*{Suggerimento}
+
+Si suggerisce di utilizzare come base di partenza l'implementazione del produttore-consumatore. La struttura dati rappresentante la coda di processi è disponibile nel file \href{https://github.com/00Darxk/Sistemi-Operativi/tree/main/Esercizi/Programmazione%20Concorrente/queue.h}{queue.h}.
+
+Prendere familiarità con le strutture dati definite in queue.h, in particolare con la struct Process. Quest'ultima può essere utilizzata per memorizzare informazioni utili quali l'ID del processo, il suo tempo di esecuzione, il tempo di arrivo all'interno del sistema, il tempo di avvio ed il tempo di completamento. Questa struct Process è utilizzata per costruire una lista bidirezionale che può essere acceduta con diverse funzioni, tra le quali: \verb|enqueue(Queue* queue, Process* data)| e \verb|dequeue(Queue* queue)|: la prima aggiunge un processo in coda alla lista, la seconda rimuove e restituisce il processo in testa alla lista. Per poter inizializzare la coda è necessario utilizzare la funzione \verb|initializeQueue(Queue* queue)|. 
+
+\`{E} possibile implementare la simulazione estendendo il problema del produttore-consumatore, in particolare:
+\begin{itemize}
+    \item Il thread produttore può essere implementato in modo tale da generare processi alla velocità indicata in precedenza;
+    \item Il thread consumatore può rappresentare una CPU che estrae un processo dalla coda e lo esegue.
+\end{itemize}
+
+\subsubsection*{Soluzione}
+
+Si considerano due tipi di thread, un thread produttore che può creare processi ad una frequenza di 10/20/30 processi al secondo, realizzata tramite una \verb|usleep()| relativa all'intervallo di tempo tra due processi:
+\inputminted[firstline=87, lastline=108, breaklines, breakanywhere]{c}{./Programmazione Concorrente/scheduler.c}
+Il secondo tipo di thread rappresenta una CPU ed è in grado di rimuovere un processo dalla coda e simulare la sua esecuzione, sempre con una \verb|usleep()| per il tempo descritto dentro al processo. Quando il thread CPU ha finito l'esecuzione di un processo aggiorna il turnaround time medio ed attende che la coda sia libera per poter rimuovere un ulteriore processo:
+\inputminted[firstline=110, lastline=138, breaklines, breakanywhere]{c}{./Programmazione Concorrente/scheduler.c}
+
+La funzione \verb|getTime()| assegna il timestamp corrente all'attributo di tipo \verb|struct timeval| del processo, come il numero di microsecondi trascorsi dal primo Gennaio 1970. Utilizzato anche nella funzione \verb|newProcess()|. Non utilizza si utilizza un lock per questa funzione poiché la variabile globale \verb|pid| contenente l'ultimo id di un processo generato viene acceduta solamente dal singolo thread produttore e non provoca una race condition. 
+Si utilizzano delle variabili temporanee \verb|temp*| per non dover utilizzare dei lock anche nelle stampe, questo infatti diminuirebbe l'efficacia dei thread, essendo abbastanza onerose rispetto a semplici assegnazioni. Così anche nella funzione \verb|updateTTime()| per aggiornare il tempo di ritorno medio, dove i lock vengono chiamati all'interno della funzione. 
+
+Nella funzione principale, vengono testate diverse combinazioni di frequenze di arrivo e numero di CPU. Ad ogni iterazione vengono ri-inizializzate le variabili globali ed i vari thread, per realizzare una graduatoria in base al tempo medio di ritorno tra tutte queste combinazioni. Essendo il codice abbastanza lungo, si omette la sua scrittura completa, è comunque disponibile su \href{https://github.com/00Darxk/Sistemi-Operativi/tree/main/Esercizi/Programmazione%20Concorrente/scheduler.c}{scheduler.c} come tutti gli altri esercizi. 
+
+\subsection{Problema dei Filosofi a Cena}
+
+Cinque filosofi siedono ad una tavola rotonda con un piatto di spaghetti davanti e una forchetta a sinistra. Ci sono dunque cinque filosofi, cinque piatti di spaghetti e cinque forchette.
+
+Si immagini che la vita di un filosofo consista di periodi alterni di mangiare e pensare, e che ciascun filosofo abbia bisogno di due forchette per mangiare, ma che le forchette vengano prese una per volta. Dopo essere riuscito a prendere due forchette il filosofo mangia per un po', poi lascia le forchette e ricomincia a pensare. Il problema consiste nello sviluppo di un algoritmo che impedisca lo stallo (deadlock) o la morte d'inedia (starvation). Il deadlock può verificarsi se ciascuno dei filosofi tiene in mano una forchetta senza mai riuscire a prendere l'altra. Il filosofo F1 aspetta di prendere la forchetta che ha in mano il filosofo F2, che aspetta la forchetta che ha in mano il filosofo F3, e così via in un circolo vizioso. La situazione di starvation può verificarsi indipendentemente dal deadlock se uno dei filosofi non riesce mai a prendere entrambe le forchette.
+
+Implementare un programma basato sulla libreria pthread dove i cinque filosofi sono realizzati tramite 5 thread, e si cerchi di evitare situazioni di deadlock e starvation. 
+
+
+Per risolvere questo problema bisogna evitare di gestire le forchette come un array circolare, poiché si incontrerebbe una situazione dove ogni filosofo ha in mano la forchetta alla sua sinistra, o destra, un deadlock. 
+Inoltre è importante l'ordine in cui vengono prese le forchette, e quindi l'ordine in cui vengono usati i lock. In quest'implementazione ogni forchetta ha il suo lock, le l'uso delle forchette ed il lock sono rappresentati come due array di cinque elementi. 
+Ogni filosofo inoltre ha un suo ID che lo identifica, passato al momento della creazione dei thread, da 1 a 5. Se si tentasse di accedere sempre alla forchetta indirizzata dal proprio ID, si incontrerebbe una situazione di stallo, realizzato da un array circolare. 
+Per cui ogni $i$-esimo filosofo quando si trova in procinto di mangiare determina l'indice delle due forchette che necessita, $i-1$ ed $i\mod5$. Per impedire che ogni filosofo abbia in mano la forchetta di indice $i-1$ si impone che la prima forchetta che ogni filosofo controlla è quella di indice minore, tra $i-1$ e $i\mod5$. 
+In questo modo è garantito che non si incontri mai la situazione di stallo circolare. Poiché se il filosofo cui $i\mod 5<i$ non riesce a prendere la forchetta di indice $i\mod 5$ comincia a pensare, poiché non ha in mano alcuna forchetta, e quindi la forchetta $i-1$ è libera per essere usata dal filosofo successivo nella tavola, che potrà mangiare ed in seguito liberare le sue due forchette. In questo modo si può continuare lungo l'intera tavola facendo mangiare almeno un filosofo alla volta, per ritornare al filosofo $i$-esimo iniziale che vedrà la forchetta $i\mod5$ libera e potrà mangiare, dato che la forchetta $i-1$ verrà sicuramente liberata, se non è già libera. 
+Si considera quindi la seguente implementazione del thread filosofo:
+\inputminted[firstline=55, lastline=114, breaklines, breakanywhere, autogobble]{c}{./Programmazione Concorrente/filosofi_a_cena.c}
+
+I nomi degli indici \verb|leftFork| e \verb|rightFork| non sono propriamente corretti, poiché come descritto la prima forchetta ad essere presa \verb|leftFork| non coincide sempre con la forchetta alla sinistra del filosofo. 
+
+Utilizzando questa strategia tuttavia, se la tavola è sufficientemente ampia, ovvero sono presenti molti di più di cinque filosofi, il primo filosofo di questa catena potrebbe morire di inedia a causa della lunghezza. Per tavole più grandi quindi si potrebbe imporre che un filosofo deve scegliere casualmente quale forchetta tenta di prendere per prima. Ma in questo modo non è garantito che ogni filosofo sia in grado di mangiare prima di morire di inedia. Non esiste infatti una soluzione in grado di impedire sia lo stallo che la morte di inedia di uno dei due filosofi, bisogna sceglierla in base alle caratteristiche del problema corrente, e dalle prestazioni richieste. 
+
+\subsection{Problema del Barbiere Sonnolento}
+
+Un barbiere possiede un negozio con una sola sedia da lavoro e un certo numero limitato di posti per attendere. Se non ci sono clienti il barbiere dorme. All'arrivo del primo cliente il barbiere si sveglia ed inizia a servirlo. 
+Se dovessero sopraggiungere clienti durante il periodo di attività del barbiere, essi si mettono in attesa sui posti disponibili. Al termine dei posti di attesa, un ulteriore cliente viene scartato. Questa problematica è molto vicina al sistema di funzionamento degli helpdesk informatizzati dove l'operatore serve, uno per volta, tutti i clienti in coda oppure attende, senza effettuare alcuna operazione in particolare, l'arrivo di nuove chiamate. Una corretta programmazione concorrente deve far ``dormire'' il barbiere in assenza di clienti, attivare il barbiere sul primo cliente al suo arrivo e mettere in coda tutti i successivi clienti tenendoli inattivi.
+
+
+Questo problema è molto simile alla simulazione di uno scheduler, la differenza principale è la capacità del thread consumatore di aspettare dormendo l'arrivo di altri clienti. I clienti vengono realizzati utilizzando la stessa struttura dati \verb|Process|. Per poter aspettare l'arrivo di altri clienti, senza effettuare alcuna azione, un'implementazione rudimentale utilizza la funzione \verb|usleep()| per aspettare un periodo di tempo casuale, proporzionale al tempo di arrivo di un cliente:
+\inputminted[firstline=52, lastline=77, breaklines, breakanywhere, autogobble]{c}{./Programmazione Concorrente/barbiere_sonnolento.c}
+Una soluzione più corretta consiste nell'utilizzare segnale o semafori dalle librerie \verb|signals.h| e \verb|semaphore.h| per poter inviare segnali tra i thread, in caso di arrivo di clienti. 
+Oppure si potrebbero utilizzare thread condizionali, forniti dalla stessa libreria \verb|pthread.h| per effettuare queste operazioni. 
+
+Il thread produttore è essenzialmente lo stesso del simulatore di uno scheduler:
+\inputminted[firstline=79, lastline=100, breaklines, breakanywhere, autogobble]{c}{./Programmazione Concorrente/barbiere_sonnolento.c}
+
+\clearpage
 
 \end{document}
